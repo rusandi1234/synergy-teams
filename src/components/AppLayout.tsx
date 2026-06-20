@@ -13,43 +13,51 @@ const NAV = [
 export function AppLayout({ children, user, onSignOut }: { children?: ReactNode; user?: { email: string }; onSignOut?: () => void }) {
   return (
     <div className="min-h-screen flex bg-background text-foreground">
-      <aside className="w-64 shrink-0 bg-navy text-navy-foreground hidden md:flex flex-col">
-        <div className="px-6 py-6 border-b border-white/10">
-          <div className="flex items-center gap-2">
-            <div className="size-9 rounded-md bg-primary grid place-items-center">
+      <aside className="w-64 shrink-0 hidden md:flex flex-col relative overflow-hidden hero-gradient">
+        <div className="absolute inset-0 grid-pattern opacity-40 pointer-events-none" />
+        <div className="absolute -top-24 -right-16 size-64 rounded-full bg-primary/30 blur-3xl pointer-events-none" />
+        <div className="relative px-6 py-6 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="size-10 rounded-xl bg-primary grid place-items-center shadow-[var(--shadow-glow)]">
               <Sparkles className="size-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="font-semibold tracking-tight">SYNERGY</div>
-              <div className="text-[11px] uppercase tracking-wider opacity-60">Team Formation</div>
+              <div className="font-bold tracking-tight text-base">SYNERGY</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">Team Formation AI</div>
             </div>
           </div>
         </div>
-        <nav className="px-3 py-4 flex-1 space-y-1">
+        <nav className="relative px-3 py-4 flex-1 space-y-1">
+          <div className="px-3 pb-2 text-[10px] uppercase tracking-[0.18em] opacity-50 font-semibold">Workspace</div>
           {NAV.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               activeOptions={{ exact: to === "/" }}
-              activeProps={{ className: "bg-primary text-primary-foreground" }}
-              inactiveProps={{ className: "hover:bg-white/5 text-navy-foreground/80" }}
-              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+              activeProps={{ className: "bg-primary text-primary-foreground shadow-[var(--shadow-glow)]" }}
+              inactiveProps={{ className: "hover:bg-white/8 text-navy-foreground/85" }}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all"
             >
               <Icon className="size-4" /> {label}
             </Link>
           ))}
         </nav>
-        <div className="p-3 border-t border-white/10 space-y-2">
+        <div className="relative p-3 border-t border-white/10 space-y-2">
           {user && (
-            <div className="px-2 text-xs">
-              <div className="opacity-60 uppercase tracking-wider">Signed in</div>
-              <div className="truncate">{user.email}</div>
+            <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white/5">
+              <div className="size-7 rounded-full bg-primary grid place-items-center text-[11px] font-bold uppercase">
+                {user.email.slice(0, 2)}
+              </div>
+              <div className="min-w-0 flex-1 text-xs">
+                <div className="opacity-60 uppercase tracking-wider text-[9px]">Faculty</div>
+                <div className="truncate font-medium">{user.email}</div>
+              </div>
             </div>
           )}
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium bg-white/5 hover:bg-primary hover:text-primary-foreground transition-colors"
             >
               <LogOut className="size-4" /> Sign out
             </button>
@@ -58,9 +66,9 @@ export function AppLayout({ children, user, onSignOut }: { children?: ReactNode;
         </div>
       </aside>
       <main className="flex-1 min-w-0">
-        <header className="md:hidden bg-navy text-navy-foreground px-4 py-3 flex items-center gap-3">
+        <header className="md:hidden hero-gradient text-navy-foreground px-4 py-3 flex items-center gap-3">
           <Sparkles className="size-5 text-primary" />
-          <div className="font-semibold">SYNERGY</div>
+          <div className="font-bold">SYNERGY</div>
           <nav className="ml-auto flex gap-3 text-sm">
             {NAV.map(n => (
               <Link key={n.to} to={n.to} activeOptions={{ exact: n.to === "/" }}
