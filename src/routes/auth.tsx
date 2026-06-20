@@ -123,17 +123,26 @@ function AuthPage() {
             data: { full_name: parsed.data.name, role: "student" },
           },
         });
-        if (error) throw error;
-        const userId = data.user?.id;
+        let userId = data?.user?.id ?? null;
+        if (error) {
+          if ((error as any)?.code === "user_already_exists" || /already/i.test(error.message)) {
+            userId = await tryExistingSignIn();
+            if (!userId) { toast.error("This email is already registered. Use the correct password to sign in."); return; }
+          } else { throw error; }
+        }
         if (!userId) {
           toast.success("Check your email to confirm your account.");
           setMode("signin"); return;
         }
 
-        const { error: roleErr } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "student" });
-        if (roleErr) throw roleErr;
+        const { data: existingRoles } = await supabase
+          .from("user_roles").select("role").eq("user_id", userId);
+        if (!(existingRoles ?? []).some((r: any) => r.role === "student")) {
+          const { error: roleErr } = await supabase
+            .from("user_roles").insert({ user_id: userId, role: "student" });
+          if (roleErr) throw roleErr;
+        }
+
 
         const { error: profErr } = await supabase
           .from("student_profiles")
