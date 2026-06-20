@@ -43,7 +43,7 @@ function parseSkills(raw: string | null | undefined): string[] {
 
 function StudentDashboard() {
   const { user } = AuthRoute.useRouteContext();
-  const { data: profile, isLoading } = useMyProfile(user.id);
+  const { data: profile, isLoading, isError, error } = useMyProfile(user.email);
   const { data: allStudents = [] } = useStudents();
   const { teams } = useSynergyForStudents(allStudents);
 
