@@ -165,10 +165,10 @@ function AuthPage() {
           </div>
 
           <h2 className="text-2xl font-semibold tracking-tight">
-            {mode === "signin" ? "Sign in" : mode === "signup" ? "Create student account" : "Reset password"}
+            {mode === "signin" ? "Faculty sign in" : mode === "signup" ? "Create student account" : "Reset password"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "signin" && "Faculty and students use the same sign-in."}
+            {mode === "signin" && "Faculty only. Students use the student login."}
             {mode === "signup" && "Register as a student to share your profile."}
             {mode === "forgot" && "We'll email you a reset link."}
           </p>
