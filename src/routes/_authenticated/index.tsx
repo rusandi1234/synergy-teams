@@ -118,10 +118,18 @@ function Dashboard() {
 
       {/* METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard label="Total Students" value={isLoading ? "…" : students.length} hint={`Avg load ${avgWorkload}%`} icon={Users} accent="navy" trend="flat" trendValue="Active cohort" />
-        <MetricCard label="Generated Teams" value={teams.length} hint={`${publishedCount} published · ${approvedCount} approved`} icon={Users2} accent="primary" trend={teams.length ? "up" : "flat"} trendValue={teams.length ? "Allocation complete" : "Awaiting run"} />
-        <MetricCard label="Conflicts" value={conflicts.length} hint={`${highConflicts} high · ${medConflicts} medium`} icon={AlertTriangle} accent="warning" trend={highConflicts ? "down" : "flat"} trendValue={highConflicts ? "Needs review" : "Stable"} />
-        <MetricCard label="Avg Compatibility" value={`${avgCompat}%`} hint={avgCompat >= 75 ? "Healthy" : avgCompat > 0 ? "Optimise" : "—"} icon={Target} accent="success" trend={avgCompat >= 75 ? "up" : "flat"} trendValue={avgCompat >= 75 ? "Above target" : "Build teams"} />
+        <Link to="/students" className="block cursor-pointer rounded-2xl transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+          <MetricCard label="Total Students" value={isLoading ? "…" : students.length} hint={`Avg load ${avgWorkload}%`} icon={Users} accent="navy" trend="flat" trendValue="Active cohort" />
+        </Link>
+        <Link to="/teams" className="block cursor-pointer rounded-2xl transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+          <MetricCard label="Generated Teams" value={teams.length} hint={`${publishedCount} published · ${approvedCount} approved`} icon={Users2} accent="primary" trend={teams.length ? "up" : "flat"} trendValue={teams.length ? "Allocation complete" : "Awaiting run"} />
+        </Link>
+        <Link to="/conflicts" className="block cursor-pointer rounded-2xl transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+          <MetricCard label="Conflicts" value={conflicts.length} hint={`${highConflicts} high · ${medConflicts} medium`} icon={AlertTriangle} accent="warning" trend={highConflicts ? "down" : "flat"} trendValue={highConflicts ? "Needs review" : "Stable"} />
+        </Link>
+        <Link to="/analytics" className="block cursor-pointer rounded-2xl transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40">
+          <MetricCard label="Avg Compatibility" value={`${avgCompat}%`} hint={avgCompat >= 75 ? "Healthy" : avgCompat > 0 ? "Optimise" : "—"} icon={Target} accent="success" trend={avgCompat >= 75 ? "up" : "flat"} trendValue={avgCompat >= 75 ? "Above target" : "Build teams"} />
+        </Link>
       </div>
 
       {/* WORKFLOW + EXECUTIVE SUMMARY */}
