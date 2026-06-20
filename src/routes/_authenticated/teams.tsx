@@ -94,8 +94,13 @@ function TeamsPage() {
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {t.members.length} members · avg workload {t.avgWorkload}%
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <Badge tone={t.status === "Published" ? "success" : t.status === "Approved" ? "info" : "warning"}>{t.status}</Badge>
+                    {t.members.length < 2 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-destructive">
+                        <AlertTriangle className="size-3" /> Under-staffed
+                      </span>
+                    )}
                   </div>
                 </div>
                 <CompatibilityRing value={t.compatibility} size={88} />
