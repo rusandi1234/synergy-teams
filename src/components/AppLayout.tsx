@@ -77,11 +77,12 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
   );
 }
 
-export function StatCard({ label, value, hint, accent }: { label: string; value: ReactNode; hint?: string; accent?: "primary" | "navy" | "success" | "warning" }) {
+export function StatCard({ label, value, hint, accent }: { label: string; value: ReactNode; hint?: string; accent?: "primary" | "navy" | "success" | "warning" | "info" }) {
   const bar =
     accent === "primary" ? "bg-primary" :
     accent === "navy" ? "bg-navy" :
     accent === "success" ? "bg-success" :
+    accent === "info" ? "bg-info" :
     accent === "warning" ? "bg-warning" : "bg-muted";
   return (
     <div className="bg-card rounded-xl border border-border p-5 shadow-sm relative overflow-hidden">
