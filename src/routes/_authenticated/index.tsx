@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/")({
 function Dashboard() {
   const { data: students = [], isLoading } = useStudents();
   const { teams, conflicts, recommendations } = useSynergyForStudents(students);
+  const [confirmPublish, setConfirmPublish] = useState(false);
 
   const avgCompat = useMemo(
     () => (teams.length ? Math.round(teams.reduce((a, t) => a + t.compatibility, 0) / teams.length) : 0),
