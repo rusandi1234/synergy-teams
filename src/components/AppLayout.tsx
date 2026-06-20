@@ -1,8 +1,8 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User } from "lucide-react";
 import type { ReactNode } from "react";
 
-const NAV = [
+const FACULTY_NAV = [
   { to: "/", label: "Faculty Dashboard", icon: LayoutDashboard },
   { to: "/students", label: "Students", icon: Users },
   { to: "/teams", label: "Teams", icon: Users2 },
@@ -10,7 +10,13 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
-export function AppLayout({ children, user, onSignOut }: { children?: ReactNode; user?: { email: string }; onSignOut?: () => void }) {
+const STUDENT_NAV = [
+  { to: "/student", label: "My Dashboard", icon: User },
+] as const;
+
+export function AppLayout({ children, user, role = "faculty", onSignOut }: { children?: ReactNode; user?: { email: string }; role?: "faculty" | "student"; onSignOut?: () => void }) {
+  const NAV = role === "student" ? STUDENT_NAV : FACULTY_NAV;
+  const roleLabel = role === "student" ? "Student" : "Faculty";
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <aside className="w-64 shrink-0 hidden md:flex flex-col relative overflow-hidden hero-gradient">
