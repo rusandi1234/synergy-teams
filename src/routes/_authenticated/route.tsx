@@ -1,15 +1,15 @@
 import { createFileRoute, Outlet, redirect, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { externalSupabase, type AppRole } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { resetSynergy } from "@/lib/synergy";
-import { useRole } from "@/lib/useRole";
+import { useRole, type AppRole } from "@/lib/useRole";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await externalSupabase.auth.getUser();
+    const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
     return { user: data.user };
   },
@@ -48,7 +48,7 @@ function AuthLayout() {
     await queryClient.cancelQueries();
     queryClient.clear();
     resetSynergy();
-    await externalSupabase.auth.signOut();
+    await supabase.auth.signOut();
     navigate({ to: "/auth", replace: true });
   };
 
