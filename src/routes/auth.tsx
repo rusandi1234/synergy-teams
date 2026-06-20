@@ -101,6 +101,14 @@ function AuthPage() {
     e.preventDefault();
     setBusy(true);
     try {
+      // If the auth account already exists, sign them in with the supplied password
+      // and finish role/profile setup inline instead of erroring out.
+      const tryExistingSignIn = async (): Promise<string | null> => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) return null;
+        return data.user.id;
+      };
+
       if (role === "student") {
         const parsed = studentSchema.safeParse({
           email, password, confirm, name, skills, availability, preferredRole, workload,
