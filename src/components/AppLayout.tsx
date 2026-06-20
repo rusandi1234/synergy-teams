@@ -10,7 +10,7 @@ const NAV = [
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
-export function AppLayout({ children }: { children?: ReactNode }) {
+export function AppLayout({ children, user, onSignOut }: { children?: ReactNode; user?: { email: string }; onSignOut?: () => void }) {
   return (
     <div className="min-h-screen flex bg-background text-foreground">
       <aside className="w-64 shrink-0 bg-navy text-navy-foreground hidden md:flex flex-col">
