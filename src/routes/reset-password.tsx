@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { externalSupabase } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/reset-password")({
@@ -19,10 +19,10 @@ function ResetPasswordPage() {
     if (password.length < 6) return toast.error("Password must be at least 6 characters");
     setBusy(true);
     try {
-      const { error } = await externalSupabase.auth.updateUser({ password });
+      const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast.success("Password updated. Please sign in.");
-      await externalSupabase.auth.signOut();
+      await supabase.auth.signOut();
       navigate({ to: "/auth" });
     } catch (err: any) {
       toast.error(err?.message ?? "Could not update password");
