@@ -5,10 +5,10 @@ import { PageHeader, Badge } from "@/components/AppLayout";
 import { CompatibilityRing, ScoreBar } from "@/components/SynergyUI";
 import {
   useSynergyForStudents, updateTeamStatus, approveAll, publishAll, runGeneration,
-  rebalanceTeam, renameTeam, type Team,
+  rebalanceTeam, renameTeam, deleteTeam, type Team,
 } from "@/lib/synergy";
 import { useStudents } from "@/lib/useStudents";
-import { Play, CheckCircle2, Send, Users2, Eye, Pencil, Shuffle } from "lucide-react";
+import { Play, CheckCircle2, Send, Users2, Eye, Pencil, Shuffle, Trash2, AlertTriangle } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
@@ -35,6 +35,7 @@ function TeamsPage() {
   const [editing, setEditing] = useState<Team | null>(null);
   const [editName, setEditName] = useState("");
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Team | null>(null);
 
   const openEdit = (t: Team) => { setEditing(t); setEditName(t.name); };
   const saveEdit = () => {
@@ -93,8 +94,13 @@ function TeamsPage() {
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {t.members.length} members · avg workload {t.avgWorkload}%
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-2 flex items-center gap-2 flex-wrap">
                     <Badge tone={t.status === "Published" ? "success" : t.status === "Approved" ? "info" : "warning"}>{t.status}</Badge>
+                    {t.members.length < 2 && (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-destructive">
+                        <AlertTriangle className="size-3" /> Under-staffed
+                      </span>
+                    )}
                   </div>
                 </div>
                 <CompatibilityRing value={t.compatibility} size={88} />
@@ -131,6 +137,12 @@ function TeamsPage() {
                 <button className="btn-ghost text-xs" onClick={() => setDetail(t)}><Eye className="size-3.5" /> View Details</button>
                 <button className="btn-ghost text-xs" onClick={() => openEdit(t)}><Pencil className="size-3.5" /> Edit Team</button>
                 <button className="btn-ghost text-xs" onClick={() => onRebalance(t)}><Shuffle className="size-3.5" /> Rebalance</button>
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-destructive border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition"
+                  onClick={() => setConfirmDelete(t)}
+                >
+                  <Trash2 className="size-3.5" /> Delete
+                </button>
                 <button className="btn-secondary text-xs" onClick={() => { updateTeamStatus(t.id, "Approved"); toast.success(`${t.name} approved`); }}>Approve</button>
                 <button className="btn-primary text-xs" onClick={() => { updateTeamStatus(t.id, "Published"); toast.success(`${t.name} published`); }}>Publish</button>
               </div>
@@ -221,7 +233,36 @@ function TeamsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Team confirm */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this team?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete ? `${confirmDelete.name} will be removed along with its ${confirmDelete.members.length} member assignment${confirmDelete.members.length === 1 ? "" : "s"}. Dashboard statistics will refresh automatically.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!confirmDelete) return;
+                const name = confirmDelete.name;
+                deleteTeam(confirmDelete.id);
+                setConfirmDelete(null);
+                if (detail?.id === confirmDelete.id) setDetail(null);
+                toast.success(`${name} deleted`);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
+
   );
 }
 
