@@ -85,6 +85,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:description", content: "Faculty workspace for generating balanced student project teams with conflict detection and recommendations." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "SYNERGY · Intelligent Student Team Formation" },
+      { name: "twitter:description", content: "Faculty workspace for generating balanced student project teams with conflict detection and recommendations." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/370698d4-dbda-4ade-b51d-13e6c463d897" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/370698d4-dbda-4ade-b51d-13e6c463d897" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
