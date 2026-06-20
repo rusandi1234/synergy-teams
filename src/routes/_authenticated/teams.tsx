@@ -233,7 +233,36 @@ function TeamsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Delete Team confirm */}
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this team?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDelete ? `${confirmDelete.name} will be removed along with its ${confirmDelete.members.length} member assignment${confirmDelete.members.length === 1 ? "" : "s"}. Dashboard statistics will refresh automatically.` : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!confirmDelete) return;
+                const name = confirmDelete.name;
+                deleteTeam(confirmDelete.id);
+                setConfirmDelete(null);
+                if (detail?.id === confirmDelete.id) setDetail(null);
+                toast.success(`${name} deleted`);
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
+
   );
 }
 
