@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -62,12 +62,11 @@ function AuthPage() {
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (resolvedRole === "faculty") {
+        toast.success("Welcome back!");
         navigate({ to: "/", replace: true });
-      } else if (resolvedRole === "student") {
-        navigate({ to: "/student", replace: true });
       } else {
         await externalSupabase.auth.signOut();
-        toast.error("No role is assigned to this account.");
+        toast.error("This account is not a faculty account. Please use the student login.");
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
@@ -166,10 +165,10 @@ function AuthPage() {
           </div>
 
           <h2 className="text-2xl font-semibold tracking-tight">
-            {mode === "signin" ? "Sign in" : mode === "signup" ? "Create student account" : "Reset password"}
+            {mode === "signin" ? "Faculty sign in" : mode === "signup" ? "Create student account" : "Reset password"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "signin" && "Faculty and students use the same sign-in."}
+            {mode === "signin" && "Faculty only. Students use the student login."}
             {mode === "signup" && "Register as a student to share your profile."}
             {mode === "forgot" && "We'll email you a reset link."}
           </p>
@@ -183,7 +182,7 @@ function AuthPage() {
               </button>
               <div className="flex items-center justify-between text-sm pt-2">
                 <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline">Forgot password?</button>
-                <button type="button" onClick={() => setMode("signup")} className="text-primary hover:underline">Register</button>
+                <Link to="/student-login" className="text-primary hover:underline">Student login</Link>
               </div>
             </form>
           )}

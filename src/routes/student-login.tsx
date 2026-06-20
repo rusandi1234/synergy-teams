@@ -37,15 +37,15 @@ function StudentLoginPage() {
       if (error) throw error;
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
-      if (resolvedRole === "faculty") {
-        toast.success("Welcome back!");
-        navigate({ to: "/", replace: true });
-      } else if (resolvedRole === "student") {
+      if (resolvedRole === "student") {
         toast.success("Welcome back!");
         navigate({ to: "/student", replace: true });
+      } else if (resolvedRole === "faculty") {
+        await externalSupabase.auth.signOut();
+        toast.error("This is a faculty account. Please use the faculty login.");
       } else {
         await externalSupabase.auth.signOut();
-        toast.error("No role is assigned to this account.");
+        toast.error("No student profile found for this account. Please register.");
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
