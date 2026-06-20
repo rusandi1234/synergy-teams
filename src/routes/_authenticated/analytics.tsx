@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 
-export const Route = createFileRoute("/analytics")({
+export const Route = createFileRoute("/_authenticated/analytics")({
   head: () => ({
     meta: [
       { title: "Analytics · SYNERGY" },

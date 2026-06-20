@@ -4,7 +4,7 @@ import { PageHeader, StatCard, Badge } from "@/components/AppLayout";
 import { useStudents } from "@/lib/useStudents";
 import { Search } from "lucide-react";
 
-export const Route = createFileRoute("/students")({
+export const Route = createFileRoute("/_authenticated/students")({
   head: () => ({
     meta: [
       { title: "Students · SYNERGY" },
