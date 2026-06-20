@@ -1,10 +1,21 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
 import { PageHeader, Badge } from "@/components/AppLayout";
 import { CompatibilityRing, ScoreBar } from "@/components/SynergyUI";
-import { useSynergyForStudents, updateTeamStatus, approveAll, publishAll, runGeneration } from "@/lib/synergy";
+import {
+  useSynergyForStudents, updateTeamStatus, approveAll, publishAll, runGeneration,
+  rebalanceTeam, renameTeam, type Team,
+} from "@/lib/synergy";
 import { useStudents } from "@/lib/useStudents";
-import { Play, CheckCircle2, Send, Users2 } from "lucide-react";
+import { Play, CheckCircle2, Send, Users2, Eye, Pencil, Shuffle } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({
@@ -20,6 +31,30 @@ function TeamsPage() {
   const { data: students = [] } = useStudents();
   const { teams } = useSynergyForStudents(students);
 
+  const [detail, setDetail] = useState<Team | null>(null);
+  const [editing, setEditing] = useState<Team | null>(null);
+  const [editName, setEditName] = useState("");
+  const [confirmPublish, setConfirmPublish] = useState(false);
+
+  const openEdit = (t: Team) => { setEditing(t); setEditName(t.name); };
+  const saveEdit = () => {
+    if (!editing) return;
+    const name = editName.trim();
+    if (!name) return toast.error("Team name cannot be empty");
+    renameTeam(editing.id, name);
+    toast.success("Team renamed");
+    setEditing(null);
+  };
+
+  const onRebalance = (t: Team) => {
+    const r = rebalanceTeam(t.id);
+    r.ok ? toast.success(r.message) : toast.message(r.message);
+    if (detail) setDetail(prev => prev && prev.id === t.id ? (teams.find(x => x.id === t.id) ?? prev) : prev);
+  };
+
+  // Keep `detail` in sync if the underlying team mutated
+  const liveDetail = detail ? teams.find(t => t.id === detail.id) ?? null : null;
+
   return (
     <>
       <PageHeader
@@ -27,13 +62,13 @@ function TeamsPage() {
         subtitle="Inspect generated teams, balance scores, and progress them through the approval workflow."
         actions={
           <>
-            <button onClick={() => { runGeneration(students); toast.success("Teams regenerated"); }} className="btn-secondary">
+            <button onClick={() => { if (!students.length) return toast.error("No students loaded"); runGeneration(students); toast.success("Teams regenerated"); }} className="btn-secondary">
               <Play className="size-4" /> Regenerate
             </button>
-            <button onClick={() => { if (!teams.length) return; approveAll(); toast.success("All teams approved"); }} className="btn-secondary">
+            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); approveAll(); toast.success("All teams approved"); }} className="btn-secondary">
               <CheckCircle2 className="size-4" /> Approve All
             </button>
-            <button onClick={() => { if (!teams.length) return; publishAll(); toast.success("Teams published"); }} className="btn-primary">
+            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); setConfirmPublish(true); }} className="btn-primary">
               <Send className="size-4" /> Publish All
             </button>
           </>
@@ -92,15 +127,100 @@ function TeamsPage() {
                 ))}
               </div>
 
-              <div className="relative mt-5 flex items-center justify-end gap-2">
-                <button className="btn-ghost text-xs" onClick={() => updateTeamStatus(t.id, "Pending Review")}>Pending</button>
-                <button className="btn-secondary text-xs" onClick={() => updateTeamStatus(t.id, "Approved")}>Approve</button>
-                <button className="btn-primary text-xs" onClick={() => updateTeamStatus(t.id, "Published")}>Publish</button>
+              <div className="relative mt-5 flex flex-wrap items-center justify-end gap-2">
+                <button className="btn-ghost text-xs" onClick={() => setDetail(t)}><Eye className="size-3.5" /> View Details</button>
+                <button className="btn-ghost text-xs" onClick={() => openEdit(t)}><Pencil className="size-3.5" /> Edit Team</button>
+                <button className="btn-ghost text-xs" onClick={() => onRebalance(t)}><Shuffle className="size-3.5" /> Rebalance</button>
+                <button className="btn-secondary text-xs" onClick={() => { updateTeamStatus(t.id, "Approved"); toast.success(`${t.name} approved`); }}>Approve</button>
+                <button className="btn-primary text-xs" onClick={() => { updateTeamStatus(t.id, "Published"); toast.success(`${t.name} published`); }}>Publish</button>
               </div>
             </div>
           ))}
         </div>
       )}
+
+      {/* Details Dialog */}
+      <Dialog open={!!liveDetail} onOpenChange={(o) => !o && setDetail(null)}>
+        <DialogContent className="max-w-xl">
+          {liveDetail && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{liveDetail.name}</DialogTitle>
+                <DialogDescription>
+                  {liveDetail.members.length} members · compatibility {liveDetail.compatibility}% · avg workload {liveDetail.avgWorkload}%
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-4">
+                <ScoreBar label="Skill Diversity" value={liveDetail.scores.skillDiversity} />
+                <ScoreBar label="Availability" value={liveDetail.scores.availability} />
+                <ScoreBar label="Role Coverage" value={liveDetail.scores.roleCompat} />
+                <ScoreBar label="Workload Balance" value={liveDetail.scores.workloadBalance} />
+              </div>
+              <div className="mt-2 space-y-1.5 max-h-72 overflow-auto">
+                {liveDetail.members.map(m => (
+                  <div key={m.id} className="flex items-center justify-between border border-border rounded-md px-3 py-2 bg-background/60 text-sm">
+                    <div>
+                      <div className="font-medium">{m.name}</div>
+                      <div className="text-xs text-muted-foreground">{m.skills.join(", ") || "—"}</div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={roleTone(m.role)}>{m.role}</Badge>
+                      <span className="text-xs tabular-nums">{m.workload}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <DialogFooter className="gap-2">
+                <button className="btn-secondary text-sm" onClick={() => onRebalance(liveDetail)}>
+                  <Shuffle className="size-4" /> Rebalance
+                </button>
+                <button className="btn-primary text-sm" onClick={() => { updateTeamStatus(liveDetail.id, "Published"); toast.success("Team published"); setDetail(null); }}>
+                  <Send className="size-4" /> Publish
+                </button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Team Dialog */}
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Team</DialogTitle>
+            <DialogDescription>Rename this team. Members are managed via Rebalance or Regenerate.</DialogDescription>
+          </DialogHeader>
+          <label className="block">
+            <span className="text-xs font-medium text-muted-foreground">Team Name</span>
+            <input
+              value={editName} onChange={e => setEditName(e.target.value)}
+              className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+            />
+          </label>
+          <DialogFooter className="gap-2">
+            <button className="btn-ghost text-sm" onClick={() => setEditing(null)}>Cancel</button>
+            <button className="btn-primary text-sm" onClick={saveEdit}>Save</button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Publish All confirm */}
+      <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish all teams?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will mark every team as Published and is visible to students immediately. You can regenerate to reset.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { publishAll(); toast.success("All teams published"); }}>
+              Publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
