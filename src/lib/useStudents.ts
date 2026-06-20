@@ -24,18 +24,22 @@ export function useStudents() {
     queryFn: async (): Promise<Student[]> => {
       const { data, error } = await externalSupabase
         .from("Students")
-        .select("id,name,skills,availability,workload,role")
-        .order("name");
+        .select("student_id,name,skills,availability,workload,Roles")
+        .order("student_id", { ascending: true });
       if (error) throw error;
       const rows = (data ?? []) as ExternalStudentRow[];
       return rows.map(r => ({
-        id: String(r.id),
+        id: String(r.student_id),
         name: r.name,
         skills: parseSkills(r.skills),
         availability: r.availability ?? "Flexible",
         workload: normalizeWorkload(r.workload),
-        role: r.role ?? "Developer",
+        role: r.Roles ?? "Developer",
       }));
     },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
 }
