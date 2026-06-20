@@ -41,5 +41,6 @@ export function useStudents() {
     gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: true,
+    refetchInterval: 5000,
   });
 }

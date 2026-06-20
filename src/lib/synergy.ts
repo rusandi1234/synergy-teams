@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 export type Role = "Developer" | "Designer" | "QA" | "Business Analyst" | "Team Leader";
 
@@ -232,6 +232,7 @@ type State = {
   teams: Team[];
   conflicts: Conflict[];
   recommendations: string[];
+  sourceRosterKey?: string;
 };
 let state: State = { teams: [], conflicts: [], recommendations: [] };
 const listeners = new Set<() => void>();
@@ -246,11 +247,32 @@ export function useSynergy() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 }
 
+export function getRosterKey(students: Student[]) {
+  return students
+    .map(s => `${s.id}:${s.name}:${s.role}:${s.availability}:${s.workload}:${s.skills.join("|")}`)
+    .sort()
+    .join(";");
+}
+
+export function useSynergyForStudents(students: Student[]) {
+  const snapshot = useSynergy();
+  const currentRosterKey = getRosterKey(students);
+  const isStale = students.length > 0 && !!snapshot.sourceRosterKey && snapshot.sourceRosterKey !== currentRosterKey;
+
+  useEffect(() => {
+    if (isStale) resetSynergy();
+  }, [isStale]);
+
+  return isStale
+    ? { teams: [], conflicts: [], recommendations: [], sourceRosterKey: undefined }
+    : snapshot;
+}
+
 export function runGeneration(students: Student[]) {
   const teams = generateTeams(students);
   const conflicts = detectConflicts(teams);
   const recommendations = buildRecommendations(teams, conflicts);
-  setState({ teams, conflicts, recommendations });
+  setState({ teams, conflicts, recommendations, sourceRosterKey: getRosterKey(students) });
   return { teams, conflicts, recommendations };
 }
 
@@ -267,5 +289,5 @@ export function publishAll() {
 }
 
 export function resetSynergy() {
-  setState({ teams: [], conflicts: [], recommendations: [] });
+  setState({ teams: [], conflicts: [], recommendations: [], sourceRosterKey: undefined });
 }
