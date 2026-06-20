@@ -92,6 +92,15 @@ function AuthLayout() {
     );
   }
 
+  if (!role) {
+    // Profile-completion gate — minimal chrome, no sidebar
+    return (
+      <div className="min-h-screen bg-background p-6 md:p-10">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <AppLayout
       user={{ email: user.email ?? "User" }}
@@ -102,3 +111,4 @@ function AuthLayout() {
     </AppLayout>
   );
 }
+
