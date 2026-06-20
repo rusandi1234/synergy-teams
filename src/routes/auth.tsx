@@ -1,55 +1,78 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Sparkles, GraduationCap, BookOpenCheck } from "lucide-react";
 import { externalSupabase } from "@/integrations/external-supabase/client";
-import { Sparkles } from "lucide-react";
 import { getUserRole } from "@/lib/useRole";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign In · SYNERGY" },
-      { name: "description", content: "Sign in or register to access the SYNERGY workspace." },
+      { name: "description", content: "Sign in or register for SYNERGY as a student or faculty member." },
     ],
   }),
   component: AuthPage,
 });
 
 type Mode = "signin" | "signup" | "forgot";
+type Role = "student" | "faculty";
 
 const ROLES = ["Developer", "Designer", "QA", "Business Analyst", "Team Leader"] as const;
 const AVAIL = ["Mon Wed Fri", "Tue Thu", "Weekends", "Flexible", "Evenings"] as const;
+const DEPARTMENTS = [
+  "Computer Science",
+  "Information Technology",
+  "Electronics",
+  "Mechanical",
+  "Civil",
+  "Electrical",
+  "Mathematics",
+  "Other",
+] as const;
 
 const signinSchema = z.object({
   email: z.string().trim().email("Enter a valid email").max(255),
   password: z.string().min(6, "Password must be at least 6 characters").max(72),
 });
 
-const signupSchema = signinSchema.extend({
+const studentSchema = signinSchema.extend({
   name: z.string().trim().min(2, "Enter your full name").max(120),
   confirm: z.string(),
-  skills: z.string().trim().min(1, "List at least one skill"),
+  skills: z.string().trim().min(1, "List at least one skill").max(500),
   availability: z.string().min(1),
-  role: z.string().min(1),
+  preferredRole: z.string().min(1),
   workload: z.coerce.number().min(0).max(10),
+}).refine(d => d.password === d.confirm, { message: "Passwords don't match", path: ["confirm"] });
+
+const facultySchema = signinSchema.extend({
+  name: z.string().trim().min(2, "Enter your full name").max(120),
+  confirm: z.string(),
+  department: z.string().min(1, "Select a department"),
 }).refine(d => d.password === d.confirm, { message: "Passwords don't match", path: ["confirm"] });
 
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("signin");
+  const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
 
   // shared
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // signup extras
+  // signup
   const [name, setName] = useState("");
   const [confirm, setConfirm] = useState("");
+  // student
   const [skills, setSkills] = useState("");
   const [availability, setAvailability] = useState<string>(AVAIL[3]);
-  const [role, setRole] = useState<string>(ROLES[0]);
+  const [preferredRole, setPreferredRole] = useState<string>(ROLES[0]);
   const [workload, setWorkload] = useState<number>(3);
+  // faculty
+  const [department, setDepartment] = useState<string>(DEPARTMENTS[0]);
+
+  const redirectFor = (r: Role) => (r === "faculty" ? "/" : "/student");
 
   const onSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +84,13 @@ function AuthPage() {
       if (error) throw error;
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
-      if (resolvedRole === "faculty") {
-        toast.success("Welcome back!");
-        navigate({ to: "/", replace: true });
-      } else {
+      if (!resolvedRole) {
         await externalSupabase.auth.signOut();
-        toast.error("This account is not a faculty account. Please use the student login.");
+        toast.error("No role assigned to this account. Please register first.");
+        return;
       }
+      toast.success("Welcome back!");
+      navigate({ to: redirectFor(resolvedRole), replace: true });
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
     } finally { setBusy(false); }
@@ -75,39 +98,74 @@ function AuthPage() {
 
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    const parsed = signupSchema.safeParse({ email, password, confirm, name, skills, availability, role, workload });
-    if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
     try {
-      const { data, error } = await externalSupabase.auth.signUp({
-        email: parsed.data.email,
-        password: parsed.data.password,
-        options: {
-          emailRedirectTo: window.location.origin,
-          data: { full_name: parsed.data.name },
-        },
-      });
-      if (error) throw error;
-      const userId = data.user?.id;
-      if (userId) {
-        // Insert student profile row
-        const { error: insErr } = await externalSupabase.from("Students").insert({
-          auth_user_id: userId,
-          email: parsed.data.email,
-          name: parsed.data.name,
-          skills: parsed.data.skills,
-          availability: parsed.data.availability,
-          workload: parsed.data.workload,
-          Roles: parsed.data.role,
+      if (role === "student") {
+        const parsed = studentSchema.safeParse({
+          email, password, confirm, name, skills, availability, preferredRole, workload,
         });
-        if (insErr) console.error("Profile insert failed:", insErr);
-      }
-      if (data.session) {
-        toast.success("Account created — welcome!");
-        navigate({ to: "/" });
+        if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+        const { data, error } = await externalSupabase.auth.signUp({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/student`,
+            data: { full_name: parsed.data.name, role: "student" },
+          },
+        });
+        if (error) throw error;
+        const userId = data.user?.id;
+        if (userId) {
+          await externalSupabase.from("user_roles").insert({ user_id: userId, role: "student" });
+          const { error: insErr } = await externalSupabase.from("Students").insert({
+            auth_user_id: userId,
+            email: parsed.data.email,
+            name: parsed.data.name,
+            skills: parsed.data.skills,
+            availability: parsed.data.availability,
+            workload: parsed.data.workload,
+            Roles: parsed.data.preferredRole,
+          });
+          if (insErr) console.error("Student profile insert failed:", insErr);
+        }
+        if (data.session) {
+          toast.success("Account created — welcome!");
+          navigate({ to: "/student", replace: true });
+        } else {
+          toast.success("Account created — check your email to confirm.");
+          setMode("signin");
+        }
       } else {
-        toast.success("Account created — check your email to confirm.");
-        setMode("signin");
+        const parsed = facultySchema.safeParse({ email, password, confirm, name, department });
+        if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
+        const { data, error } = await externalSupabase.auth.signUp({
+          email: parsed.data.email,
+          password: parsed.data.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/`,
+            data: { full_name: parsed.data.name, department: parsed.data.department, role: "faculty" },
+          },
+        });
+        if (error) throw error;
+        const userId = data.user?.id;
+        if (userId) {
+          await externalSupabase.from("user_roles").insert({ user_id: userId, role: "faculty" });
+          // Best-effort faculty profile insert; silently ignore if table doesn't exist
+          const { error: facErr } = await externalSupabase.from("Faculty").insert({
+            auth_user_id: userId,
+            email: parsed.data.email,
+            name: parsed.data.name,
+            department: parsed.data.department,
+          });
+          if (facErr) console.warn("Faculty profile insert skipped:", facErr.message);
+        }
+        if (data.session) {
+          toast.success("Faculty account created — welcome!");
+          navigate({ to: "/", replace: true });
+        } else {
+          toast.success("Account created — check your email to confirm.");
+          setMode("signin");
+        }
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
@@ -149,7 +207,7 @@ function AuthPage() {
             Intelligent Student<br />Team Formation
           </h1>
           <p className="mt-4 text-sm opacity-70 max-w-md">
-            Sign in as faculty to review and publish teams, or register as a student to share your profile and view your assignment.
+            Sign in or create an account as a student to share your profile, or as faculty to review and publish teams.
           </p>
         </div>
         <div className="relative text-xs opacity-50">University Edition · v1.0</div>
@@ -164,14 +222,34 @@ function AuthPage() {
             <div className="font-semibold">SYNERGY</div>
           </div>
 
+          {/* Mode tabs */}
+          <div className="inline-flex rounded-md border border-border p-1 bg-muted/40 mb-5">
+            {(["signin", "signup"] as const).map(m => (
+              <button key={m} type="button" onClick={() => setMode(m)}
+                className={`px-4 py-1.5 text-sm rounded ${mode === m ? "bg-background shadow-sm font-medium" : "text-muted-foreground"}`}>
+                {m === "signin" ? "Sign in" : "Register"}
+              </button>
+            ))}
+          </div>
+
           <h2 className="text-2xl font-semibold tracking-tight">
-            {mode === "signin" ? "Faculty sign in" : mode === "signup" ? "Create student account" : "Reset password"}
+            {mode === "signin" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset password"}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            {mode === "signin" && "Faculty only. Students use the student login."}
-            {mode === "signup" && "Register as a student to share your profile."}
+            {mode === "signin" && "Sign in to access your dashboard."}
+            {mode === "signup" && "Choose your role to get started."}
             {mode === "forgot" && "We'll email you a reset link."}
           </p>
+
+          {/* Role selector for signup */}
+          {mode === "signup" && (
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <RoleCard active={role === "student"} onClick={() => setRole("student")}
+                icon={<GraduationCap className="size-5" />} title="Student" desc="Share profile, join a team" />
+              <RoleCard active={role === "faculty"} onClick={() => setRole("faculty")}
+                icon={<BookOpenCheck className="size-5" />} title="Faculty" desc="Form & publish teams" />
+            </div>
+          )}
 
           {mode === "signin" && (
             <form onSubmit={onSignIn} className="mt-6 space-y-3">
@@ -182,31 +260,39 @@ function AuthPage() {
               </button>
               <div className="flex items-center justify-between text-sm pt-2">
                 <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline">Forgot password?</button>
-                <Link to="/student-login" className="text-primary hover:underline">Student login</Link>
+                <button type="button" onClick={() => setMode("signup")} className="text-primary hover:underline">Create account</button>
               </div>
             </form>
           )}
 
           {mode === "signup" && (
-            <form onSubmit={onSignUp} className="mt-6 space-y-3">
+            <form onSubmit={onSignUp} className="mt-5 space-y-3">
               <Field label="Full Name" value={name} onChange={setName} autoComplete="name" />
               <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="new-password" />
                 <Field label="Confirm" type="password" value={confirm} onChange={setConfirm} autoComplete="new-password" />
               </div>
-              <Field label="Skills (comma separated)" value={skills} onChange={setSkills} placeholder="Python, React, Testing" />
-              <div className="grid grid-cols-2 gap-3">
-                <Select label="Availability" value={availability} onChange={setAvailability} options={AVAIL as unknown as string[]} />
-                <Select label="Preferred Role" value={role} onChange={setRole} options={ROLES as unknown as string[]} />
-              </div>
-              <label className="block">
-                <span className="text-xs font-medium text-muted-foreground">Workload (0–10): {workload}</span>
-                <input type="range" min={0} max={10} value={workload} onChange={e => setWorkload(Number(e.target.value))}
-                  className="mt-2 w-full accent-primary" />
-              </label>
+
+              {role === "student" ? (
+                <>
+                  <Field label="Skills (comma separated)" value={skills} onChange={setSkills} placeholder="Python, React, Testing" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <Select label="Availability" value={availability} onChange={setAvailability} options={AVAIL as unknown as string[]} />
+                    <Select label="Preferred Role" value={preferredRole} onChange={setPreferredRole} options={ROLES as unknown as string[]} />
+                  </div>
+                  <label className="block">
+                    <span className="text-xs font-medium text-muted-foreground">Workload Capacity (0–10): {workload}</span>
+                    <input type="range" min={0} max={10} value={workload} onChange={e => setWorkload(Number(e.target.value))}
+                      className="mt-2 w-full accent-primary" />
+                  </label>
+                </>
+              ) : (
+                <Select label="Department" value={department} onChange={setDepartment} options={DEPARTMENTS as unknown as string[]} />
+              )}
+
               <button disabled={busy} className="btn-primary w-full justify-center" type="submit">
-                {busy ? "Creating…" : "Create Account"}
+                {busy ? "Creating…" : `Create ${role === "faculty" ? "Faculty" : "Student"} Account`}
               </button>
               <div className="text-sm text-center pt-2">
                 Already have an account?{" "}
@@ -229,6 +315,18 @@ function AuthPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function RoleCard({ active, onClick, icon, title, desc }: {
+  active: boolean; onClick: () => void; icon: React.ReactNode; title: string; desc: string;
+}) {
+  return (
+    <button type="button" onClick={onClick}
+      className={`text-left rounded-lg border p-3 transition ${active ? "border-primary bg-primary/5 ring-2 ring-primary/20" : "border-border hover:border-primary/40"}`}>
+      <div className="flex items-center gap-2 font-medium text-sm">{icon}{title}</div>
+      <div className="text-xs text-muted-foreground mt-1">{desc}</div>
+    </button>
   );
 }
 
