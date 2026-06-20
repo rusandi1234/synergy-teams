@@ -11,6 +11,11 @@ import {
   Play, CheckCircle2, Send, RotateCcw, AlertTriangle, Workflow, Sparkles,
   Users, Users2, Target, Activity, Lightbulb, ArrowRight, Zap,
 } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
