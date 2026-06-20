@@ -292,6 +292,13 @@ export function resetSynergy() {
   setState({ teams: [], conflicts: [], recommendations: [], sourceRosterKey: undefined });
 }
 
+export function deleteTeam(teamId: string) {
+  const teams = state.teams.filter(t => t.id !== teamId);
+  const conflicts = detectConflicts(teams);
+  const recommendations = buildRecommendations(teams, conflicts);
+  setState({ teams, conflicts, recommendations });
+}
+
 export function renameTeam(teamId: string, name: string) {
   const teams = state.teams.map(t => (t.id === teamId ? { ...t, name } : t));
   const conflicts = state.conflicts.map(c => (c.teamId === teamId ? { ...c, teamName: name } : c));
