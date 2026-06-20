@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { PageHeader, Badge } from "@/components/AppLayout";
 import { MetricCard, CompatibilityRing, WorkflowTimeline, SectionHeader } from "@/components/SynergyUI";
