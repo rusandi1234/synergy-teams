@@ -143,7 +143,7 @@ function Dashboard() {
             <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); approveAll(); toast.success("All teams approved"); }} className="btn-secondary">
               <CheckCircle2 className="size-4" /> Approve All
             </button>
-            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); publishAll(); toast.success("Teams published"); }} className="btn-primary">
+            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); setConfirmPublish(true); }} className="btn-primary">
               <Send className="size-4" /> Publish Teams
             </button>
             <button onClick={() => { resetSynergy(); toast.message("Workflow reset"); }} className="btn-ghost">
