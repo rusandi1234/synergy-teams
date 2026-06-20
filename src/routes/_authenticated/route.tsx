@@ -24,11 +24,11 @@ function AuthLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
-  const { data: role, isLoading } = useRole(user.id);
+  const { data: role, isLoading, isError, error } = useRole(user.id);
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    if (isLoading || !role) return;
+    if (isLoading || isError || !role) return;
     const path = location.pathname;
     if (role === "student") {
       if (FACULTY_ROUTES.includes(path) && !STUDENT_ROUTES.includes(path)) {
@@ -42,7 +42,7 @@ function AuthLayout() {
       }
     }
     setBootstrapped(true);
-  }, [role, isLoading, location.pathname, navigate]);
+  }, [role, isLoading, isError, location.pathname, navigate]);
 
   const onSignOut = async () => {
     await queryClient.cancelQueries();
@@ -52,7 +52,22 @@ function AuthLayout() {
     navigate({ to: "/auth", replace: true });
   };
 
-  if (isLoading || !role || !bootstrapped) {
+  if (isError || (!isLoading && !role)) {
+    const message = error instanceof Error ? error.message : "No role is assigned to this account.";
+    return (
+      <div className="min-h-screen grid place-items-center bg-background p-6 text-center">
+        <div className="max-w-sm space-y-3">
+          <h1 className="text-lg font-semibold">Role verification required</h1>
+          <p className="text-sm text-muted-foreground">{message}</p>
+          <button type="button" onClick={onSignOut} className="btn-primary mx-auto">
+            Sign out
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || !bootstrapped) {
     return (
       <div className="min-h-screen grid place-items-center bg-background text-sm text-muted-foreground">
         Loading workspace…
