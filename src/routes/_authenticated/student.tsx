@@ -184,7 +184,7 @@ function StudentDashboard() {
         <div className="relative grid md:grid-cols-[1fr_auto] gap-6 items-center">
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur text-xs font-medium uppercase tracking-wider">
-              <Sparkles className="size-3.5 text-primary" /> {profile.Roles ?? "Student"}
+              <Sparkles className="size-3.5 text-primary" /> {profile.preferred_role ?? "Student"}
             </div>
             <h1 className="mt-3 text-3xl font-bold tracking-tight">{profile.name}</h1>
             <p className="mt-2 text-sm opacity-80">{profile.email ?? user.email}</p>
@@ -223,7 +223,7 @@ function StudentDashboard() {
 
       {/* METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <MetricCard label="Preferred Role" value={profile.Roles ?? "—"} icon={Briefcase} accent="navy" />
+        <MetricCard label="Preferred Role" value={profile.preferred_role ?? "—"} icon={Briefcase} accent="navy" />
         <MetricCard label="Availability" value={profile.availability ?? "—"} icon={Calendar} accent="primary" />
         <MetricCard label="Workload" value={`${workloadPct}%`} hint={`${profile.workload ?? 0}/10`} icon={Activity} accent={workloadPct > 60 ? "warning" : "success"} />
         <MetricCard label="Compatibility" value={myTeam ? `${myTeam.compatibility}%` : "—"} hint={myTeam ? "With your team" : "No team yet"} icon={Target} accent="success" />
@@ -255,7 +255,7 @@ function StudentDashboard() {
                     {m.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="font-medium text-sm truncate">{m.name}{String(m.id) === String(profile.student_id) && <span className="ml-1 text-xs text-primary">(you)</span>}</div>
+                    <div className="font-medium text-sm truncate">{m.name}{m.name?.toLowerCase() === profile.name?.toLowerCase() && <span className="ml-1 text-xs text-primary">(you)</span>}</div>
                     <div className="text-xs text-muted-foreground truncate">{m.role} · load {m.workload}%</div>
                   </div>
                 </div>
@@ -301,7 +301,7 @@ function StudentDashboard() {
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <Detail label="Full Name" value={profile.name} />
           <Detail label="Email" value={profile.email ?? user.email ?? "—"} />
-          <Detail label="Preferred Role" value={profile.Roles ?? "—"} />
+          <Detail label="Preferred Role" value={profile.preferred_role ?? "—"} />
           <Detail label="Availability" value={profile.availability ?? "—"} />
           <Detail label="Workload" value={`${profile.workload ?? 0}/10`} />
           <Detail label="Skills" value={skills.join(", ") || "—"} />
@@ -351,7 +351,7 @@ function StudentDashboard() {
                 {myTeam.members.map(m => (
                   <li key={m.id} className="flex items-center justify-between border border-border rounded-md px-3 py-2 bg-background/60 text-sm">
                     <div>
-                      <div className="font-medium">{m.name}{String(m.id) === String(profile.student_id) && <span className="ml-1 text-xs text-primary">(you)</span>}</div>
+                      <div className="font-medium">{m.name}{m.name?.toLowerCase() === profile.name?.toLowerCase() && <span className="ml-1 text-xs text-primary">(you)</span>}</div>
                       <div className="text-xs text-muted-foreground">{m.skills.join(", ") || "—"}</div>
                     </div>
                     <div className="text-xs text-muted-foreground">{m.role} · {m.workload}%</div>
