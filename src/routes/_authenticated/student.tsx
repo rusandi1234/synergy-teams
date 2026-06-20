@@ -61,10 +61,19 @@ type TaskStatus = "Pending" | "In Progress" | "Done";
 
 function StudentDashboard() {
   const { user } = AuthRoute.useRouteContext();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile, isLoading, isError, error } = useMyProfile(user.id);
   const { data: allStudents = [] } = useStudents();
   const { teams } = useSynergyForStudents(allStudents);
+
+  // Auto-redirect to profile completion if no student record exists
+  useEffect(() => {
+    if (!isLoading && !isError && !profile) {
+      navigate({ to: "/complete-profile", replace: true });
+    }
+  }, [isLoading, isError, profile, navigate]);
+
 
   // Match by name OR email against the external roster used for team formation
   const myTeam = useMemo(
