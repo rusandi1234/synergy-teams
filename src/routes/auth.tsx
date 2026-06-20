@@ -85,8 +85,8 @@ function AuthPage() {
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (!resolvedRole) {
-        await supabase.auth.signOut();
-        toast.error("No role assigned to this account. Please register first.");
+        toast.info("Finish setting up your profile to continue.");
+        navigate({ to: "/complete-profile", replace: true });
         return;
       }
       toast.success("Welcome back!");
@@ -96,10 +96,19 @@ function AuthPage() {
     } finally { setBusy(false); }
   };
 
+
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
+      // If the auth account already exists, sign them in with the supplied password
+      // and finish role/profile setup inline instead of erroring out.
+      const tryExistingSignIn = async (): Promise<string | null> => {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.user) return null;
+        return data.user.id;
+      };
+
       if (role === "student") {
         const parsed = studentSchema.safeParse({
           email, password, confirm, name, skills, availability, preferredRole, workload,
@@ -114,21 +123,30 @@ function AuthPage() {
             data: { full_name: parsed.data.name, role: "student" },
           },
         });
-        if (error) throw error;
-        const userId = data.user?.id;
+        let userId = data?.user?.id ?? null;
+        if (error) {
+          if ((error as any)?.code === "user_already_exists" || /already/i.test(error.message)) {
+            userId = await tryExistingSignIn();
+            if (!userId) { toast.error("This email is already registered. Use the correct password to sign in."); return; }
+          } else { throw error; }
+        }
         if (!userId) {
           toast.success("Check your email to confirm your account.");
           setMode("signin"); return;
         }
 
-        const { error: roleErr } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "student" });
-        if (roleErr) throw roleErr;
+        const { data: existingRoles } = await supabase
+          .from("user_roles").select("role").eq("user_id", userId);
+        if (!(existingRoles ?? []).some((r: any) => r.role === "student")) {
+          const { error: roleErr } = await supabase
+            .from("user_roles").insert({ user_id: userId, role: "student" });
+          if (roleErr) throw roleErr;
+        }
+
 
         const { error: profErr } = await supabase
           .from("student_profiles")
-          .insert({
+          .upsert({
             user_id: userId,
             name: parsed.data.name,
             email: parsed.data.email,
@@ -136,10 +154,10 @@ function AuthPage() {
             availability: parsed.data.availability,
             preferred_role: parsed.data.preferredRole,
             workload: parsed.data.workload,
-          });
+          }, { onConflict: "user_id" });
         if (profErr) throw profErr;
 
-        toast.success("Account created — welcome!");
+        toast.success("Account ready — welcome!");
         navigate({ to: "/student", replace: true });
       } else {
         const parsed = facultySchema.safeParse({ email, password, confirm, name, department });
@@ -153,31 +171,40 @@ function AuthPage() {
             data: { full_name: parsed.data.name, role: "faculty" },
           },
         });
-        if (error) throw error;
-        const userId = data.user?.id;
+        let userId = data?.user?.id ?? null;
+        if (error) {
+          if ((error as any)?.code === "user_already_exists" || /already/i.test(error.message)) {
+            userId = await tryExistingSignIn();
+            if (!userId) { toast.error("This email is already registered. Use the correct password to sign in."); return; }
+          } else { throw error; }
+        }
         if (!userId) {
           toast.success("Check your email to confirm your account.");
           setMode("signin"); return;
         }
 
-        const { error: roleErr } = await supabase
-          .from("user_roles")
-          .insert({ user_id: userId, role: "faculty" });
-        if (roleErr) throw roleErr;
+        const { data: existingRoles } = await supabase
+          .from("user_roles").select("role").eq("user_id", userId);
+        if (!(existingRoles ?? []).some((r: any) => r.role === "faculty")) {
+          const { error: roleErr } = await supabase
+            .from("user_roles").insert({ user_id: userId, role: "faculty" });
+          if (roleErr) throw roleErr;
+        }
 
         const { error: facErr } = await supabase
           .from("faculty_profiles")
-          .insert({
+          .upsert({
             user_id: userId,
             name: parsed.data.name,
             email: parsed.data.email,
             department: parsed.data.department,
-          });
+          }, { onConflict: "user_id" });
         if (facErr) throw facErr;
 
-        toast.success("Faculty account created — welcome!");
+        toast.success("Faculty account ready — welcome!");
         navigate({ to: "/", replace: true });
       }
+
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
     } finally { setBusy(false); }
