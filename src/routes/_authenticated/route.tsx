@@ -28,8 +28,24 @@ function AuthLayout() {
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    if (isLoading || isError || !role) return;
+    if (isLoading) return;
     const path = location.pathname;
+
+    // No role assigned yet → send to profile completion (unless already there)
+    if (!isError && !role) {
+      if (path !== "/complete-profile") {
+        navigate({ to: "/complete-profile", replace: true });
+        return;
+      }
+      setBootstrapped(true);
+      return;
+    }
+
+    if (isError) return;
+
+    // Allow the completion page for any signed-in user
+    if (path === "/complete-profile") { setBootstrapped(true); return; }
+
     if (role === "student") {
       if (FACULTY_ROUTES.includes(path) && !STUDENT_ROUTES.includes(path)) {
         navigate({ to: "/student", replace: true });
@@ -52,8 +68,9 @@ function AuthLayout() {
     navigate({ to: "/auth", replace: true });
   };
 
-  if (isError || (!isLoading && !role)) {
-    const message = error instanceof Error ? error.message : "No role is assigned to this account.";
+  if (isError) {
+    const message = error instanceof Error ? error.message : "Role lookup failed.";
+
     return (
       <div className="min-h-screen grid place-items-center bg-background p-6 text-center">
         <div className="max-w-sm space-y-3">
@@ -75,6 +92,15 @@ function AuthLayout() {
     );
   }
 
+  if (!role) {
+    // Profile-completion gate — minimal chrome, no sidebar
+    return (
+      <div className="min-h-screen bg-background p-6 md:p-10">
+        <Outlet />
+      </div>
+    );
+  }
+
   return (
     <AppLayout
       user={{ email: user.email ?? "User" }}
@@ -85,3 +111,4 @@ function AuthLayout() {
     </AppLayout>
   );
 }
+

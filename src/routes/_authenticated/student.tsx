@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState, useEffect, useRef } from "react";
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,10 +61,19 @@ type TaskStatus = "Pending" | "In Progress" | "Done";
 
 function StudentDashboard() {
   const { user } = AuthRoute.useRouteContext();
+  const navigate = useNavigate();
   const qc = useQueryClient();
   const { data: profile, isLoading, isError, error } = useMyProfile(user.id);
   const { data: allStudents = [] } = useStudents();
   const { teams } = useSynergyForStudents(allStudents);
+
+  // Auto-redirect to profile completion if no student record exists
+  useEffect(() => {
+    if (!isLoading && !isError && !profile) {
+      navigate({ to: "/complete-profile", replace: true });
+    }
+  }, [isLoading, isError, profile, navigate]);
+
 
   // Match by name OR email against the external roster used for team formation
   const myTeam = useMemo(
@@ -146,18 +156,21 @@ function StudentDashboard() {
     return <div className="text-sm text-muted-foreground">Loading your profile…</div>;
   }
 
-  if (isError || !profile) {
+  if (isError) {
     return (
       <div className="surface-elevated p-8 text-center">
         <h2 className="text-lg font-semibold text-destructive">Unable to load student profile</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          {isError
-            ? (error as Error)?.message ?? "Something went wrong loading your record."
-            : `No student record found for ${user.email}. Please contact faculty to be added.`}
+          {(error as Error)?.message ?? "Something went wrong loading your record."}
         </p>
       </div>
     );
   }
+
+  if (!profile) {
+    return <div className="text-sm text-muted-foreground">Redirecting to profile setup…</div>;
+  }
+
 
   const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) =>
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
