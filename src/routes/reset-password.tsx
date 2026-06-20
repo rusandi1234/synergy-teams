@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import synergyMark from "@/assets/synergy-mark.png.asset.json";
+import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/reset-password")({
   head: () => ({ meta: [{ title: "Reset Password · SYNERGY" }] }),
@@ -33,8 +33,8 @@ function ResetPasswordPage() {
     <div className="min-h-screen grid place-items-center bg-background p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 mb-6">
-          <div className="size-9 rounded-md bg-white grid place-items-center p-1">
-            <img src={synergyMark.url} alt="SYNERGY" className="size-full object-contain" />
+          <div className="size-9 rounded-md bg-primary grid place-items-center">
+            <Sparkles className="size-5 text-primary-foreground" />
           </div>
           <div className="font-semibold">SYNERGY</div>
         </div>
