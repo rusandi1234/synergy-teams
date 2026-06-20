@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { externalSupabase, type ExternalStudentRow } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { Route as AuthRoute } from "./route";
 import { PageHeader, Badge } from "@/components/AppLayout";
 import { MetricCard, CompatibilityRing, SectionHeader } from "@/components/SynergyUI";
@@ -28,27 +28,33 @@ export const Route = createFileRoute("/_authenticated/student")({
 const ROLES = ["Developer", "Designer", "QA", "Business Analyst", "Team Leader"];
 const AVAIL = ["Mon Wed Fri", "Tue Thu", "Weekends", "Flexible", "Evenings"];
 
-function useMyProfile(email: string | undefined) {
+type StudentProfileRow = {
+  user_id: string;
+  name: string;
+  email: string;
+  skills: string[];
+  availability: string;
+  preferred_role: string;
+  workload: number;
+};
+
+function useMyProfile(userId: string | undefined) {
   return useQuery({
-    queryKey: ["my-profile", email],
-    enabled: !!email,
+    queryKey: ["my-student-profile", userId],
+    enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await externalSupabase
-        .from("Students")
-        .select("student_id,name,skills,availability,workload,Roles,auth_user_id,email")
-        .ilike("email", email!)
+      const { data, error } = await supabase
+        .from("student_profiles")
+        .select("user_id,name,email,skills,availability,preferred_role,workload")
+        .eq("user_id", userId!)
         .maybeSingle();
       if (error) throw error;
-      return data as ExternalStudentRow | null;
+      return data as StudentProfileRow | null;
     },
     staleTime: 30_000,
   });
 }
 
-function parseSkills(raw: string | null | undefined): string[] {
-  if (!raw) return [];
-  return raw.split(/[,;/|]| and /i).map(s => s.trim()).filter(Boolean);
-}
 
 type TaskStatus = "Pending" | "In Progress" | "Done";
 
