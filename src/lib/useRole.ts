@@ -15,7 +15,10 @@ export function useRole(userId: string | undefined) {
       const roles = (data ?? []).map(r => r.role as AppRole);
       // Faculty wins if present
       if (roles.includes("faculty")) return "faculty";
-      return "student";
+      // Only treat as student when explicitly tagged; otherwise default to faculty
+      // so pre-existing accounts retain access to the faculty workspace.
+      if (roles.includes("student")) return "student";
+      return "faculty";
     },
     staleTime: 60_000,
   });
