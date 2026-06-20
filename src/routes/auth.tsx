@@ -7,7 +7,6 @@ import { lovable } from "@/integrations/lovable";
 import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
-  ssr: false,
   head: () => ({
     meta: [
       { title: "Faculty Sign In · SYNERGY" },
