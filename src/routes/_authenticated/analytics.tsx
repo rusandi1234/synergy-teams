@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { PageHeader } from "@/components/AppLayout";
 import { MetricCard } from "@/components/SynergyUI";
 import { useStudents } from "@/lib/useStudents";
-import { useSynergy } from "@/lib/synergy";
+import { useSynergyForStudents } from "@/lib/synergy";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar,
@@ -24,7 +24,7 @@ const COLORS = ["#DC2626", "#1E3A8A", "#0EA5E9", "#F59E0B", "#10B981", "#7C3AED"
 
 function AnalyticsPage() {
   const { data: students = [] } = useStudents();
-  const { teams } = useSynergy();
+  const { teams } = useSynergyForStudents(students);
 
   const roleData = useMemo(() => {
     const m: Record<string, number> = {};

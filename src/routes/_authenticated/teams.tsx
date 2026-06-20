@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader, Badge } from "@/components/AppLayout";
 import { CompatibilityRing, ScoreBar } from "@/components/SynergyUI";
-import { useSynergy, updateTeamStatus, approveAll, publishAll, runGeneration } from "@/lib/synergy";
+import { useSynergyForStudents, updateTeamStatus, approveAll, publishAll, runGeneration } from "@/lib/synergy";
 import { useStudents } from "@/lib/useStudents";
 import { Play, CheckCircle2, Send, Users2 } from "lucide-react";
 
@@ -17,8 +17,8 @@ export const Route = createFileRoute("/_authenticated/teams")({
 });
 
 function TeamsPage() {
-  const { teams } = useSynergy();
   const { data: students = [] } = useStudents();
+  const { teams } = useSynergyForStudents(students);
 
   return (
     <>

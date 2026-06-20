@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageHeader } from "@/components/AppLayout";
 import { MetricCard, SeverityBadge, SectionHeader } from "@/components/SynergyUI";
-import { useSynergy } from "@/lib/synergy";
+import { useStudents } from "@/lib/useStudents";
+import { useSynergyForStudents } from "@/lib/synergy";
 import { AlertTriangle, Lightbulb, AlertOctagon, Info, Shield, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/conflicts")({
@@ -15,7 +16,8 @@ export const Route = createFileRoute("/_authenticated/conflicts")({
 });
 
 function ConflictsPage() {
-  const { conflicts, recommendations } = useSynergy();
+  const { data: students = [] } = useStudents();
+  const { conflicts, recommendations } = useSynergyForStudents(students);
   const high = conflicts.filter(c => c.severity === "High").length;
   const med = conflicts.filter(c => c.severity === "Medium").length;
   const low = conflicts.filter(c => c.severity === "Low").length;
