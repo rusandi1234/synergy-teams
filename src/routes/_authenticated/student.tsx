@@ -19,15 +19,15 @@ export const Route = createFileRoute("/_authenticated/student")({
   component: StudentDashboard,
 });
 
-function useMyProfile(userId: string) {
+function useMyProfile(email: string | undefined) {
   return useQuery({
-    queryKey: ["my-profile", userId],
-    enabled: !!userId,
+    queryKey: ["my-profile", email],
+    enabled: !!email,
     queryFn: async () => {
       const { data, error } = await externalSupabase
         .from("Students")
         .select("student_id,name,skills,availability,workload,Roles,auth_user_id,email")
-        .eq("auth_user_id", userId)
+        .ilike("email", email!)
         .maybeSingle();
       if (error) throw error;
       return data as ExternalStudentRow | null;
