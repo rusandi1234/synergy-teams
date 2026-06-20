@@ -137,6 +137,12 @@ function TeamsPage() {
                 <button className="btn-ghost text-xs" onClick={() => setDetail(t)}><Eye className="size-3.5" /> View Details</button>
                 <button className="btn-ghost text-xs" onClick={() => openEdit(t)}><Pencil className="size-3.5" /> Edit Team</button>
                 <button className="btn-ghost text-xs" onClick={() => onRebalance(t)}><Shuffle className="size-3.5" /> Rebalance</button>
+                <button
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-destructive border border-destructive/30 bg-destructive/5 hover:bg-destructive/10 transition"
+                  onClick={() => setConfirmDelete(t)}
+                >
+                  <Trash2 className="size-3.5" /> Delete
+                </button>
                 <button className="btn-secondary text-xs" onClick={() => { updateTeamStatus(t.id, "Approved"); toast.success(`${t.name} approved`); }}>Approve</button>
                 <button className="btn-primary text-xs" onClick={() => { updateTeamStatus(t.id, "Published"); toast.success(`${t.name} published`); }}>Publish</button>
               </div>
