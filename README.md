@@ -1,98 +1,85 @@
-# SYNERGY – Intelligent Student Team Formation System
+# SYNERGY – Intelligent Student Team Formation & Task Allocation System
 
 ## Overview
 
-SYNERGY is a web-based intelligent student team formation and allocation system developed for the CIPHER 2.0 Prototype & Solution Development Phase.
+SYNERGY is a web-based intelligent student team formation and task allocation system developed for the CIPHER 2.0 Prototype & Solution Development Phase.
 
-The system assists faculty members in automatically creating balanced student project teams by analyzing student skills, availability, workload, and preferred roles. It reduces the challenges of manual team allocation while improving collaboration, fairness, and project outcomes.
+The system assists faculty members in creating balanced project teams by analyzing student skills, availability, workload, and preferred roles. It automates team formation, identifies potential conflicts, and supports faculty decision-making through compatibility analysis and conflict detection.
 
 ---
 
 ## Problem Statement
 
-In many academic project modules, faculty members manually assign students into project teams. This process is time-consuming and can lead to:
+In academic project modules, faculty members often form teams manually. This process is time-consuming and can result in:
 
 * Skill imbalances between teams
 * Duplicate role preferences
 * Scheduling conflicts
 * Uneven workload distribution
 * Missing project roles
-* Delays in team formation
+* Students being assigned inefficiently
+
+These issues can negatively impact collaboration, productivity, and project success.
 
 ---
 
 ## Proposed Solution
 
-SYNERGY automates team formation through compatibility analysis and conflict-aware allocation.
+SYNERGY automates the team formation process by evaluating student profiles and generating balanced teams based on:
 
-The system evaluates student data and generates balanced teams while helping faculty identify and resolve potential issues before final approval.
+* Skills
+* Availability
+* Workload
+* Preferred Roles
+
+The system provides compatibility analysis, conflict detection, faculty review, and final team publication.
 
 ---
 
 ## Key Features
 
-### Student Management
+### Student Features
 
-* View student records
-* Manage skills and availability information
-* Track preferred project roles
-* Maintain workload information
+* Student Registration & Login
+* Student Dashboard
+* View Profile Information
+* Submit Availability
+* Set Role Preferences
+* View Assigned Team
+* View Assigned Tasks
 
-### Team Generation
+### Faculty Features
 
-* Automatically generates project teams
-* Promotes skill diversity
-* Considers role allocation
-* Balances workload distribution
+* Faculty Dashboard
+* Review Generated Teams
+* View Student Profiles
+* View Conflict Reports
+* Modify Team Allocations
+* Approve Final Teams
+* Publish Final Teams
 
-### Compatibility Analysis
+### Intelligent Features
 
-Compatibility scores are calculated using:
-
-* Skill Diversity
-* Availability Overlap
-* Role Compatibility
-* Workload Balance
-
-### Conflict Detection
-
-The system automatically identifies:
-
-* Missing required roles
-* Availability clashes
-* Duplicate leadership assignments
-* Team composition issues
-* Workload imbalances
-
-### Faculty Dashboard
-
-Faculty members can:
-
-* Review generated teams
-* Monitor compatibility scores
-* View conflict reports
-* Approve final team allocations
-* Publish final teams
-
-### Analytics Dashboard
-
-Provides visual insights into:
-
-* Student distribution
-* Role distribution
-* Team composition
-* Compatibility metrics
-* Conflict statistics
+* Compatibility Analysis
+* Balanced Team Generation
+* Conflict Detection
+* Workload Balancing
+* Role Assignment Support
+* Faculty Decision Support
 
 ---
 
 ## System Workflow
 
-Student Data Collection
+Student Registration
+↓
+Profile Validation
 ↓
 Compatibility Analysis
 ↓
 Team Generation
+↓
+Role Assignment
 ↓
 Conflict Detection
 ↓
@@ -104,76 +91,164 @@ Final Team Publication
 
 ---
 
+## Compatibility Analysis
+
+The system evaluates student compatibility using multiple factors:
+
+| Factor               | Purpose                      |
+| -------------------- | ---------------------------- |
+| Skill Diversity      | Creates balanced teams       |
+| Availability Overlap | Reduces scheduling conflicts |
+| Role Compatibility   | Minimizes role clashes       |
+| Workload Balance     | Prevents overloading members |
+
+Higher compatibility scores indicate stronger team suitability.
+
+---
+
+## Conflict Detection
+
+The system identifies:
+
+* Availability conflicts
+* Missing project roles
+* Duplicate role preferences
+* Workload imbalances
+* Team composition issues
+
+Conflicts are flagged for faculty review before final publication.
+
+---
+
 ## Technology Stack
 
-Frontend
+### Frontend
 
 * Lovable
 * React
 * TypeScript
 
-Backend & Database
+### Backend & Database
 
 * Supabase
 * PostgreSQL
 
-Deployment
+### Authentication
+
+* Supabase Authentication
+* Role-Based Access Control
+
+### Deployment
 
 * Lovable Hosting
+* GitHub Pages
 
 ---
 
 ## Project Structure
 
-Pages included in the prototype:
+```text
+src/
+├── pages/
+├── components/
+├── hooks/
+├── integrations/
+├── services/
 
-* Faculty Dashboard
-* Students Management
-* Team Review
-* Conflict Reports
-* Analytics Dashboard
+supabase/
+├── migrations/
+├── policies/
 
----
-
-## How to Use
-
-1. Open the application.
-2. View student records from the Students database.
-3. Generate project teams.
-4. Review compatibility scores.
-5. Analyze conflict reports.
-6. Review recommendations.
-7. Approve team allocations.
-8. Publish final teams.
+README.md
+```
 
 ---
 
-## Prototype Goals
+## Setup Instructions
 
-The prototype demonstrates:
+### Prerequisites
 
-* End-to-end team formation
-* Compatibility-based allocation
-* Conflict detection and reporting
-* Faculty decision support
-* Intelligent project team management
+* Node.js
+* npm
+* Supabase Account
+* GitHub Account
+
+### Installation
+
+1. Clone the repository
+
+```bash
+git clone <repository-url>
+```
+
+2. Navigate to the project
+
+```bash
+cd synergy-teams
+```
+
+3. Install dependencies
+
+```bash
+npm install
+```
+
+4. Configure Supabase environment variables
+
+5. Run the development server
+
+```bash
+npm run dev
+```
+
+6. Open the application in your browser
+
+---
+
+## Live Demo
+
+Prototype URL:
+
+https://synergy-teams.lovable.app
+
+---
+
+## GitHub Repository
+
+Source code for the SYNERGY prototype developed for CIPHER 2.0.
+
+---
+
+## Limitations
+
+Current prototype limitations include:
+
+* Uses sample datasets for demonstration
+* Basic compatibility scoring model
+* Limited real-world validation
+* No machine-learning-based recommendations
+* Team chemistry cannot be fully predicted
 
 ---
 
 ## Future Improvements
 
-* Mid-semester team rebalancing
-* Evidence-based skill validation
-* Automated task allocation
-* Student self-service profile updates
+* AI-powered team recommendations
 * Advanced compatibility algorithms
-* Notification and communication features
+* Mid-semester team rebalancing
+* Automated task allocation
+* Notification system
+* Student self-service profile management
+* Enhanced analytics and reporting
 
 ---
 
 ## Team
 
-TitanMinds
+### TitanMinds
 
-Developed for CIPHER 2.0 – Prototype & Solution Development Phase.
+Developed for:
 
+**CIPHER 2.0 – Prototype & Solution Development Phase**
+
+Informatics Institute of Technology (IIT)
