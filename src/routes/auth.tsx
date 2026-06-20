@@ -62,12 +62,11 @@ function AuthPage() {
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (resolvedRole === "faculty") {
+        toast.success("Welcome back!");
         navigate({ to: "/", replace: true });
-      } else if (resolvedRole === "student") {
-        navigate({ to: "/student", replace: true });
       } else {
         await externalSupabase.auth.signOut();
-        toast.error("No role is assigned to this account.");
+        toast.error("This account is not a faculty account. Please use the student login.");
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
