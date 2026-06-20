@@ -1,4 +1,4 @@
-// External Supabase project (user-owned) used as the primary Students data source.
+// External Supabase project (user-owned) — used for both Students data and Auth.
 // Publishable key is safe to ship to the browser.
 import { createClient } from "@supabase/supabase-js";
 
@@ -12,15 +12,24 @@ export interface ExternalStudentRow {
   availability: string | null;
   workload: number | null;
   Roles: string | null;
+  auth_user_id?: string | null;
+  email?: string | null;
 }
 
 export const externalSupabase = createClient(
   EXTERNAL_SUPABASE_URL,
   EXTERNAL_SUPABASE_PUBLISHABLE_KEY,
   {
-    auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    auth: {
+      storage: typeof window !== "undefined" ? window.localStorage : undefined,
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: "synergy-ext-auth",
+    },
     global: {
       fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
     },
   },
 );
+
+export type AppRole = "student" | "faculty";
