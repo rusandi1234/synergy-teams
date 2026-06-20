@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { externalSupabase } from "@/integrations/external-supabase/client";
 import { Sparkles } from "lucide-react";
+import { getUserRole } from "@/lib/useRole";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -56,9 +57,18 @@ function AuthPage() {
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
     try {
-      const { error } = await externalSupabase.auth.signInWithPassword(parsed.data);
+      const { data, error } = await externalSupabase.auth.signInWithPassword(parsed.data);
       if (error) throw error;
-      navigate({ to: "/" });
+      const userId = data.user?.id;
+      const resolvedRole = userId ? await getUserRole(userId) : null;
+      if (resolvedRole === "faculty") {
+        navigate({ to: "/", replace: true });
+      } else if (resolvedRole === "student") {
+        navigate({ to: "/student", replace: true });
+      } else {
+        await externalSupabase.auth.signOut();
+        toast.error("No role is assigned to this account.");
+      }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
     } finally { setBusy(false); }
