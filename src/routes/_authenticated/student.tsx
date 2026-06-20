@@ -66,12 +66,14 @@ function StudentDashboard() {
     return <div className="text-sm text-muted-foreground">Loading your profile…</div>;
   }
 
-  if (!profile) {
+  if (isError || !profile) {
     return (
       <div className="surface-elevated p-8 text-center">
-        <h2 className="text-lg font-semibold">No student profile found</h2>
+        <h2 className="text-lg font-semibold text-destructive">Unable to load student profile</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          Your account isn't linked to a student record yet. Please contact faculty.
+          {isError
+            ? (error as Error)?.message ?? "Something went wrong loading your record."
+            : `No student record found for ${user.email}. Please contact faculty to be added.`}
         </p>
       </div>
     );
