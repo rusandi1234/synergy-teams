@@ -5,7 +5,7 @@ import { PageHeader, Badge } from "@/components/AppLayout";
 import { MetricCard, CompatibilityRing, WorkflowTimeline, SectionHeader } from "@/components/SynergyUI";
 import { useStudents } from "@/lib/useStudents";
 import {
-  useSynergy, runGeneration, approveAll, publishAll, resetSynergy,
+  useSynergyForStudents, runGeneration, approveAll, publishAll, resetSynergy,
 } from "@/lib/synergy";
 import {
   Play, CheckCircle2, Send, RotateCcw, AlertTriangle, Workflow, Sparkles,
@@ -24,7 +24,7 @@ export const Route = createFileRoute("/_authenticated/")({
 
 function Dashboard() {
   const { data: students = [], isLoading } = useStudents();
-  const { teams, conflicts, recommendations } = useSynergy();
+  const { teams, conflicts, recommendations } = useSynergyForStudents(students);
 
   const avgCompat = useMemo(
     () => (teams.length ? Math.round(teams.reduce((a, t) => a + t.compatibility, 0) / teams.length) : 0),

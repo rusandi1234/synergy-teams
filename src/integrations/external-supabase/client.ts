@@ -6,12 +6,12 @@ const EXTERNAL_SUPABASE_URL = "https://yyiiyktaercsxcozlgfq.supabase.co";
 const EXTERNAL_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_2Fx169SBHW0fMhpTs1oHlw_1JR2K8Lh";
 
 export interface ExternalStudentRow {
-  id: number;
+  student_id: number;
   name: string;
   skills: string | null;
   availability: string | null;
   workload: number | null;
-  role: string | null;
+  Roles: string | null;
 }
 
 export const externalSupabase = createClient(
@@ -19,5 +19,8 @@ export const externalSupabase = createClient(
   EXTERNAL_SUPABASE_PUBLISHABLE_KEY,
   {
     auth: { persistSession: false, autoRefreshToken: false, storage: undefined },
+    global: {
+      fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }),
+    },
   },
 );
