@@ -1,13 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState, useEffect, useRef } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { externalSupabase, type ExternalStudentRow } from "@/integrations/external-supabase/client";
 import { Route as AuthRoute } from "./route";
 import { PageHeader, Badge } from "@/components/AppLayout";
 import { MetricCard, CompatibilityRing, SectionHeader } from "@/components/SynergyUI";
 import { useStudents } from "@/lib/useStudents";
 import { useSynergyForStudents } from "@/lib/synergy";
-import { User, Sparkles, Calendar, Briefcase, Activity, Users2, ListChecks, Target } from "lucide-react";
+import {
+  User, Sparkles, Calendar, Briefcase, Activity, Users2, ListChecks, Target, Pencil, Eye,
+} from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/student")({
   head: () => ({
@@ -18,6 +24,9 @@ export const Route = createFileRoute("/_authenticated/student")({
   }),
   component: StudentDashboard,
 });
+
+const ROLES = ["Developer", "Designer", "QA", "Business Analyst", "Team Leader"];
+const AVAIL = ["Mon Wed Fri", "Tue Thu", "Weekends", "Flexible", "Evenings"];
 
 function useMyProfile(email: string | undefined) {
   return useQuery({
@@ -41,8 +50,11 @@ function parseSkills(raw: string | null | undefined): string[] {
   return raw.split(/[,;/|]| and /i).map(s => s.trim()).filter(Boolean);
 }
 
+type TaskStatus = "Pending" | "In Progress" | "Done";
+
 function StudentDashboard() {
   const { user } = AuthRoute.useRouteContext();
+  const qc = useQueryClient();
   const { data: profile, isLoading, isError, error } = useMyProfile(user.email);
   const { data: allStudents = [] } = useStudents();
   const { teams } = useSynergyForStudents(allStudents);
@@ -55,12 +67,71 @@ function StudentDashboard() {
   const skills = parseSkills(profile?.skills);
   const workloadPct = profile?.workload != null ? Math.min(100, profile.workload * 20) : 0;
 
-  // Mock tasks until a real tasks table exists
-  const tasks = myTeam ? [
-    { id: 1, title: `Kickoff sync for ${myTeam.name}`, status: "Pending" as const },
-    { id: 2, title: `Share your ${profile?.Roles ?? "role"} deliverables`, status: "In Progress" as const },
-    { id: 3, title: "Weekly progress update", status: "Pending" as const },
-  ] : [];
+  // Local task state (persisted per-team in localStorage)
+  const taskKey = myTeam ? `synergy-tasks-${myTeam.id}` : undefined;
+  const defaultTasks = useMemo(() => myTeam ? [
+    { id: 1, title: `Kickoff sync for ${myTeam.name}`, status: "Pending" as TaskStatus },
+    { id: 2, title: `Share your ${profile?.Roles ?? "role"} deliverables`, status: "In Progress" as TaskStatus },
+    { id: 3, title: "Weekly progress update", status: "Pending" as TaskStatus },
+  ] : [], [myTeam, profile?.Roles]);
+  const [tasks, setTasks] = useState(defaultTasks);
+  useEffect(() => {
+    if (!taskKey) { setTasks([]); return; }
+    try {
+      const raw = localStorage.getItem(taskKey);
+      setTasks(raw ? JSON.parse(raw) : defaultTasks);
+    } catch { setTasks(defaultTasks); }
+  }, [taskKey, defaultTasks]);
+  const updateTask = (id: number, status: TaskStatus) => {
+    const next = tasks.map(t => t.id === id ? { ...t, status } : t);
+    setTasks(next);
+    if (taskKey) localStorage.setItem(taskKey, JSON.stringify(next));
+  };
+
+  // Modals & scrolling
+  const [editOpen, setEditOpen] = useState(false);
+  const [teamOpen, setTeamOpen] = useState(false);
+  const tasksRef = useRef<HTMLDivElement>(null);
+  const teamRef = useRef<HTMLDivElement>(null);
+
+  // Edit form state
+  const [fName, setFName] = useState("");
+  const [fSkills, setFSkills] = useState("");
+  const [fAvail, setFAvail] = useState(AVAIL[3]);
+  const [fRole, setFRole] = useState(ROLES[0]);
+  const [fWorkload, setFWorkload] = useState(3);
+  useEffect(() => {
+    if (!profile) return;
+    setFName(profile.name ?? "");
+    setFSkills(profile.skills ?? "");
+    setFAvail(profile.availability ?? AVAIL[3]);
+    setFRole(profile.Roles ?? ROLES[0]);
+    setFWorkload(profile.workload ?? 3);
+  }, [profile]);
+
+  const saveProfile = useMutation({
+    mutationFn: async () => {
+      if (!profile) throw new Error("No profile loaded");
+      const { error } = await externalSupabase
+        .from("Students")
+        .update({
+          name: fName,
+          skills: fSkills,
+          availability: fAvail,
+          Roles: fRole,
+          workload: fWorkload,
+        })
+        .eq("student_id", profile.student_id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Profile updated");
+      qc.invalidateQueries({ queryKey: ["my-profile"] });
+      qc.invalidateQueries({ queryKey: ["external-students"] });
+      setEditOpen(false);
+    },
+    onError: (e: any) => toast.error(e?.message ?? "Could not save profile"),
+  });
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">Loading your profile…</div>;
@@ -79,12 +150,22 @@ function StudentDashboard() {
     );
   }
 
+  const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) =>
+    ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
   return (
     <>
       <PageHeader
         title={`Welcome, ${profile.name}`}
         subtitle="Your profile, assigned team, and tasks at a glance."
-        actions={<Badge tone="primary">Student</Badge>}
+        actions={
+          <>
+            <Badge tone="primary">Student</Badge>
+            <button onClick={() => setEditOpen(true)} className="btn-secondary text-sm">
+              <Pencil className="size-4" /> Edit Profile
+            </button>
+          </>
+        }
       />
 
       {/* HERO PROFILE */}
@@ -103,6 +184,23 @@ function StudentDashboard() {
                 <span key={s} className="text-xs px-2.5 py-1 rounded-full bg-white/10 backdrop-blur border border-white/15">{s}</span>
               ))}
               {skills.length === 0 && <span className="text-xs opacity-60">No skills listed</span>}
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <button onClick={() => setEditOpen(true)} className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition">
+                <Pencil className="size-3.5" /> Update Profile
+              </button>
+              <button
+                onClick={() => { if (!myTeam) return toast.message("No team assigned yet"); setTeamOpen(true); }}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition"
+              >
+                <Eye className="size-3.5" /> View Team
+              </button>
+              <button
+                onClick={() => scrollTo(tasksRef)}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-white/10 hover:bg-white/20 backdrop-blur border border-white/15 transition"
+              >
+                <ListChecks className="size-3.5" /> View Tasks
+              </button>
             </div>
           </div>
           {myTeam && (
@@ -124,12 +222,17 @@ function StudentDashboard() {
 
       {/* TEAM + TASKS */}
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 surface-elevated p-6">
+        <div ref={teamRef} className="lg:col-span-2 surface-elevated p-6">
           <SectionHeader
             icon={Users2}
             title="Assigned Team"
             subtitle={myTeam ? `${myTeam.members.length} members` : "Awaiting team assignment"}
-            action={myTeam && <Badge tone={myTeam.status === "Published" ? "success" : myTeam.status === "Approved" ? "info" : "warning"}>{myTeam.status}</Badge>}
+            action={myTeam && (
+              <div className="flex items-center gap-2">
+                <Badge tone={myTeam.status === "Published" ? "success" : myTeam.status === "Approved" ? "info" : "warning"}>{myTeam.status}</Badge>
+                <button onClick={() => setTeamOpen(true)} className="btn-ghost text-xs"><Eye className="size-3.5" /> Details</button>
+              </div>
+            )}
           />
           {!myTeam ? (
             <div className="text-sm text-muted-foreground py-6">
@@ -152,8 +255,8 @@ function StudentDashboard() {
           )}
         </div>
 
-        <div className="surface-elevated p-6">
-          <SectionHeader icon={ListChecks} title="My Tasks" subtitle="Assignments from your team" />
+        <div ref={tasksRef} className="surface-elevated p-6">
+          <SectionHeader icon={ListChecks} title="My Tasks" subtitle="Click status to update" />
           {tasks.length === 0 ? (
             <div className="text-sm text-muted-foreground py-6">No tasks yet.</div>
           ) : (
@@ -161,9 +264,17 @@ function StudentDashboard() {
               {tasks.map(t => (
                 <li key={t.id} className="flex items-start justify-between gap-3 p-3 rounded-lg border border-border bg-card">
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{t.title}</div>
+                    <div className={`text-sm font-medium ${t.status === "Done" ? "line-through text-muted-foreground" : ""}`}>{t.title}</div>
                   </div>
-                  <Badge tone={t.status === "In Progress" ? "info" : "warning"}>{t.status}</Badge>
+                  <select
+                    value={t.status}
+                    onChange={e => updateTask(t.id, e.target.value as TaskStatus)}
+                    className="text-xs px-2 py-1 rounded border border-border bg-background"
+                  >
+                    <option>Pending</option>
+                    <option>In Progress</option>
+                    <option>Done</option>
+                  </select>
                 </li>
               ))}
             </ul>
@@ -172,7 +283,12 @@ function StudentDashboard() {
       </div>
 
       <div className="mt-6 surface-elevated p-6">
-        <SectionHeader icon={User} title="Profile Details" subtitle="Edit via faculty for now" />
+        <SectionHeader
+          icon={User}
+          title="Profile Details"
+          subtitle="Keep your skills and availability up to date"
+          action={<button onClick={() => setEditOpen(true)} className="btn-secondary text-xs"><Pencil className="size-3.5" /> Edit</button>}
+        />
         <div className="grid sm:grid-cols-2 gap-4 text-sm">
           <Detail label="Full Name" value={profile.name} />
           <Detail label="Email" value={profile.email ?? user.email ?? "—"} />
@@ -182,6 +298,66 @@ function StudentDashboard() {
           <Detail label="Skills" value={skills.join(", ") || "—"} />
         </div>
       </div>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update your details. Changes are visible to faculty immediately.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <FieldEdit label="Full Name" value={fName} onChange={setFName} />
+            <FieldEdit label="Skills (comma separated)" value={fSkills} onChange={setFSkills} />
+            <div className="grid grid-cols-2 gap-3">
+              <SelectEdit label="Availability" value={fAvail} onChange={setFAvail} options={AVAIL} />
+              <SelectEdit label="Preferred Role" value={fRole} onChange={setFRole} options={ROLES} />
+            </div>
+            <label className="block">
+              <span className="text-xs font-medium text-muted-foreground">Workload Capacity (0–10): {fWorkload}</span>
+              <input type="range" min={0} max={10} value={fWorkload} onChange={e => setFWorkload(Number(e.target.value))} className="mt-2 w-full accent-primary" />
+            </label>
+          </div>
+          <DialogFooter className="gap-2">
+            <button className="btn-ghost text-sm" onClick={() => setEditOpen(false)}>Cancel</button>
+            <button className="btn-primary text-sm" disabled={saveProfile.isPending} onClick={() => saveProfile.mutate()}>
+              {saveProfile.isPending ? "Saving…" : "Save changes"}
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Team Detail Dialog */}
+      <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
+        <DialogContent className="max-w-lg">
+          {myTeam ? (
+            <>
+              <DialogHeader>
+                <DialogTitle>{myTeam.name}</DialogTitle>
+                <DialogDescription>
+                  Compatibility {myTeam.compatibility}% · {myTeam.members.length} members · status {myTeam.status}
+                </DialogDescription>
+              </DialogHeader>
+              <ul className="space-y-1.5 max-h-72 overflow-auto">
+                {myTeam.members.map(m => (
+                  <li key={m.id} className="flex items-center justify-between border border-border rounded-md px-3 py-2 bg-background/60 text-sm">
+                    <div>
+                      <div className="font-medium">{m.name}{String(m.id) === String(profile.student_id) && <span className="ml-1 text-xs text-primary">(you)</span>}</div>
+                      <div className="text-xs text-muted-foreground">{m.skills.join(", ") || "—"}</div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">{m.role} · {m.workload}%</div>
+                  </li>
+                ))}
+              </ul>
+            </>
+          ) : (
+            <DialogHeader>
+              <DialogTitle>No team assigned</DialogTitle>
+              <DialogDescription>You'll see your team here once faculty publishes assignments.</DialogDescription>
+            </DialogHeader>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
@@ -192,5 +368,29 @@ function Detail({ label, value }: { label: string; value: string }) {
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
       <div className="mt-1 font-medium">{value}</div>
     </div>
+  );
+}
+
+function FieldEdit({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <input
+        value={value} onChange={e => onChange(e.target.value)}
+        className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+      />
+    </label>
+  );
+}
+
+function SelectEdit({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: string[] }) {
+  return (
+    <label className="block">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      <select value={value} onChange={e => onChange(e.target.value)}
+        className="mt-1 w-full px-3 py-2 rounded-md border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30">
+        {options.map(o => <option key={o}>{o}</option>)}
+      </select>
+    </label>
   );
 }
