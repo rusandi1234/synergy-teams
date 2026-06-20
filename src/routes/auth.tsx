@@ -85,8 +85,8 @@ function AuthPage() {
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (!resolvedRole) {
-        await supabase.auth.signOut();
-        toast.error("No role assigned to this account. Please register first.");
+        toast.info("Finish setting up your profile to continue.");
+        navigate({ to: "/complete-profile", replace: true });
         return;
       }
       toast.success("Welcome back!");
@@ -95,6 +95,7 @@ function AuthPage() {
       toast.error(err?.message ?? "Sign in failed");
     } finally { setBusy(false); }
   };
+
 
   const onSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
