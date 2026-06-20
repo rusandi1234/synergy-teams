@@ -55,7 +55,7 @@ export function AppLayout({ children, user, role = "faculty", onSignOut }: { chi
                 {user.email.slice(0, 2)}
               </div>
               <div className="min-w-0 flex-1 text-xs">
-                <div className="opacity-60 uppercase tracking-wider text-[9px]">Faculty</div>
+                <div className="opacity-60 uppercase tracking-wider text-[9px]">{roleLabel}</div>
                 <div className="truncate font-medium">{user.email}</div>
               </div>
             </div>
