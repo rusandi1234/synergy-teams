@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Sparkles, GraduationCap, BookOpenCheck } from "lucide-react";
-import { externalSupabase } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
 import { getUserRole } from "@/lib/useRole";
 
 export const Route = createFileRoute("/auth")({
@@ -52,24 +52,24 @@ const facultySchema = signinSchema.extend({
   department: z.string().min(1, "Select a department"),
 }).refine(d => d.password === d.confirm, { message: "Passwords don't match", path: ["confirm"] });
 
+function parseSkills(raw: string): string[] {
+  return raw.split(/[,;/|]| and /i).map(s => s.trim()).filter(Boolean);
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("signin");
   const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
 
-  // shared
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // signup
   const [name, setName] = useState("");
   const [confirm, setConfirm] = useState("");
-  // student
   const [skills, setSkills] = useState("");
   const [availability, setAvailability] = useState<string>(AVAIL[3]);
   const [preferredRole, setPreferredRole] = useState<string>(ROLES[0]);
   const [workload, setWorkload] = useState<number>(3);
-  // faculty
   const [department, setDepartment] = useState<string>(DEPARTMENTS[0]);
 
   const redirectFor = (r: Role) => (r === "faculty" ? "/" : "/student");
@@ -80,12 +80,12 @@ function AuthPage() {
     if (!parsed.success) return toast.error(parsed.error.issues[0].message);
     setBusy(true);
     try {
-      const { data, error } = await externalSupabase.auth.signInWithPassword(parsed.data);
+      const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
       if (error) throw error;
       const userId = data.user?.id;
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (!resolvedRole) {
-        await externalSupabase.auth.signOut();
+        await supabase.auth.signOut();
         toast.error("No role assigned to this account. Please register first.");
         return;
       }
@@ -105,7 +105,8 @@ function AuthPage() {
           email, password, confirm, name, skills, availability, preferredRole, workload,
         });
         if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
-        const { data, error } = await externalSupabase.auth.signUp({
+
+        const { data, error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
@@ -115,57 +116,67 @@ function AuthPage() {
         });
         if (error) throw error;
         const userId = data.user?.id;
-        if (userId) {
-          await externalSupabase.from("user_roles").insert({ user_id: userId, role: "student" });
-          const { error: insErr } = await externalSupabase.from("Students").insert({
-            auth_user_id: userId,
-            email: parsed.data.email,
+        if (!userId) {
+          toast.success("Check your email to confirm your account.");
+          setMode("signin"); return;
+        }
+
+        const { error: roleErr } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "student" });
+        if (roleErr) throw roleErr;
+
+        const { error: profErr } = await supabase
+          .from("student_profiles")
+          .insert({
+            user_id: userId,
             name: parsed.data.name,
-            skills: parsed.data.skills,
+            email: parsed.data.email,
+            skills: parseSkills(parsed.data.skills),
             availability: parsed.data.availability,
+            preferred_role: parsed.data.preferredRole,
             workload: parsed.data.workload,
-            Roles: parsed.data.preferredRole,
           });
-          if (insErr) console.error("Student profile insert failed:", insErr);
-        }
-        if (data.session) {
-          toast.success("Account created — welcome!");
-          navigate({ to: "/student", replace: true });
-        } else {
-          toast.success("Account created — check your email to confirm.");
-          setMode("signin");
-        }
+        if (profErr) throw profErr;
+
+        toast.success("Account created — welcome!");
+        navigate({ to: "/student", replace: true });
       } else {
         const parsed = facultySchema.safeParse({ email, password, confirm, name, department });
         if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
-        const { data, error } = await externalSupabase.auth.signUp({
+
+        const { data, error } = await supabase.auth.signUp({
           email: parsed.data.email,
           password: parsed.data.password,
           options: {
             emailRedirectTo: `${window.location.origin}/`,
-            data: { full_name: parsed.data.name, department: parsed.data.department, role: "faculty" },
+            data: { full_name: parsed.data.name, role: "faculty" },
           },
         });
         if (error) throw error;
         const userId = data.user?.id;
-        if (userId) {
-          await externalSupabase.from("user_roles").insert({ user_id: userId, role: "faculty" });
-          // Best-effort faculty profile insert; silently ignore if table doesn't exist
-          const { error: facErr } = await externalSupabase.from("Faculty").insert({
-            auth_user_id: userId,
-            email: parsed.data.email,
+        if (!userId) {
+          toast.success("Check your email to confirm your account.");
+          setMode("signin"); return;
+        }
+
+        const { error: roleErr } = await supabase
+          .from("user_roles")
+          .insert({ user_id: userId, role: "faculty" });
+        if (roleErr) throw roleErr;
+
+        const { error: facErr } = await supabase
+          .from("faculty_profiles")
+          .insert({
+            user_id: userId,
             name: parsed.data.name,
+            email: parsed.data.email,
             department: parsed.data.department,
           });
-          if (facErr) console.warn("Faculty profile insert skipped:", facErr.message);
-        }
-        if (data.session) {
-          toast.success("Faculty account created — welcome!");
-          navigate({ to: "/", replace: true });
-        } else {
-          toast.success("Account created — check your email to confirm.");
-          setMode("signin");
-        }
+        if (facErr) throw facErr;
+
+        toast.success("Faculty account created — welcome!");
+        navigate({ to: "/", replace: true });
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Sign up failed");
@@ -178,7 +189,7 @@ function AuthPage() {
     if (!parsed.success) return toast.error("Enter a valid email");
     setBusy(true);
     try {
-      const { error } = await externalSupabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
       if (error) throw error;
@@ -222,7 +233,6 @@ function AuthPage() {
             <div className="font-semibold">SYNERGY</div>
           </div>
 
-          {/* Mode tabs */}
           <div className="inline-flex rounded-md border border-border p-1 bg-muted/40 mb-5">
             {(["signin", "signup"] as const).map(m => (
               <button key={m} type="button" onClick={() => setMode(m)}
@@ -241,7 +251,6 @@ function AuthPage() {
             {mode === "forgot" && "We'll email you a reset link."}
           </p>
 
-          {/* Role selector for signup */}
           {mode === "signup" && (
             <div className="grid grid-cols-2 gap-3 mt-5">
               <RoleCard active={role === "student"} onClick={() => setRole("student")}

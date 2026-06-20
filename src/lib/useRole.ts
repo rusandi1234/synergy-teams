@@ -1,8 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
-import { externalSupabase, type AppRole } from "@/integrations/external-supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+
+export type AppRole = "student" | "faculty";
 
 export async function getUserRole(userId: string): Promise<AppRole | null> {
-  const { data, error } = await externalSupabase
+  const { data, error } = await supabase
     .from("user_roles")
     .select("role")
     .eq("user_id", userId);
@@ -12,7 +14,7 @@ export async function getUserRole(userId: string): Promise<AppRole | null> {
   }
 
   const roles = (data ?? [])
-    .map(row => row.role)
+    .map((row: { role: string }) => row.role)
     .filter((role): role is AppRole => role === "faculty" || role === "student");
 
   if (roles.includes("faculty")) return "faculty";
