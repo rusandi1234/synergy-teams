@@ -10,7 +10,7 @@ import {
   Play, CheckCircle2, Send, RotateCcw, AlertTriangle, Workflow, Sparkles,
 } from "lucide-react";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
     meta: [
       { title: "Faculty Dashboard · SYNERGY" },

@@ -3,7 +3,7 @@ import { PageHeader, Badge, StatCard } from "@/components/AppLayout";
 import { useSynergy } from "@/lib/synergy";
 import { AlertTriangle, Lightbulb } from "lucide-react";
 
-export const Route = createFileRoute("/conflicts")({
+export const Route = createFileRoute("/_authenticated/conflicts")({
   head: () => ({
     meta: [
       { title: "Conflict Report · SYNERGY" },

@@ -5,7 +5,7 @@ import { useSynergy, updateTeamStatus, approveAll, publishAll, runGeneration } f
 import { useStudents } from "@/lib/useStudents";
 import { Play, CheckCircle2, Send } from "lucide-react";
 
-export const Route = createFileRoute("/teams")({
+export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({
     meta: [
       { title: "Team Review · SYNERGY" },
