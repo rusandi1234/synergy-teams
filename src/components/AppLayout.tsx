@@ -1,5 +1,6 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User } from "lucide-react";
+import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, LogOut, User } from "lucide-react";
+import synergyMark from "@/assets/synergy-mark.png.asset.json";
 import type { ReactNode } from "react";
 
 const FACULTY_NAV = [
@@ -24,8 +25,8 @@ export function AppLayout({ children, user, role = "faculty", onSignOut }: { chi
         <div className="absolute -top-24 -right-16 size-64 rounded-full bg-primary/30 blur-3xl pointer-events-none" />
         <div className="relative px-6 py-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="size-10 rounded-xl bg-primary grid place-items-center shadow-[var(--shadow-glow)]">
-              <Sparkles className="size-5 text-primary-foreground" />
+            <div className="size-10 rounded-xl bg-white/95 grid place-items-center shadow-[var(--shadow-glow)] p-1.5">
+              <img src={synergyMark.url} alt="SYNERGY" className="size-full object-contain" />
             </div>
             <div>
               <div className="font-bold tracking-tight text-base">SYNERGY</div>
@@ -73,7 +74,7 @@ export function AppLayout({ children, user, role = "faculty", onSignOut }: { chi
       </aside>
       <main className="flex-1 min-w-0">
         <header className="md:hidden hero-gradient text-navy-foreground px-4 py-3 flex items-center gap-3">
-          <Sparkles className="size-5 text-primary" />
+          <img src={synergyMark.url} alt="SYNERGY" className="size-6 object-contain" />
           <div className="font-bold">SYNERGY</div>
           <nav className="ml-auto flex gap-3 text-sm">
             {NAV.map(n => (

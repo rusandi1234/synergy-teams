@@ -2,7 +2,8 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Sparkles, GraduationCap, BookOpenCheck } from "lucide-react";
+import { GraduationCap, BookOpenCheck } from "lucide-react";
+import synergyMark from "@/assets/synergy-mark.png.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserRole } from "@/lib/useRole";
 
@@ -205,8 +206,8 @@ function AuthPage() {
       <div className="hidden lg:flex flex-col justify-between hero-gradient text-navy-foreground p-12 relative overflow-hidden">
         <div className="absolute inset-0 grid-pattern opacity-30 pointer-events-none" />
         <div className="relative flex items-center gap-2">
-          <div className="size-10 rounded-md bg-primary grid place-items-center shadow-[var(--shadow-glow)]">
-            <Sparkles className="size-5 text-primary-foreground" />
+          <div className="size-10 rounded-md bg-white/95 grid place-items-center shadow-[var(--shadow-glow)] p-1.5">
+            <img src={synergyMark.url} alt="SYNERGY" className="size-full object-contain" />
           </div>
           <div>
             <div className="font-semibold text-lg">SYNERGY</div>
@@ -227,8 +228,8 @@ function AuthPage() {
       <div className="flex items-center justify-center p-6 md:p-12 overflow-y-auto">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="size-9 rounded-md bg-primary grid place-items-center">
-              <Sparkles className="size-5 text-primary-foreground" />
+            <div className="size-9 rounded-md bg-white grid place-items-center p-1">
+              <img src={synergyMark.url} alt="SYNERGY" className="size-full object-contain" />
             </div>
             <div className="font-semibold">SYNERGY</div>
           </div>
