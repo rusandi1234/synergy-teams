@@ -5,10 +5,10 @@ import { PageHeader, Badge } from "@/components/AppLayout";
 import { CompatibilityRing, ScoreBar } from "@/components/SynergyUI";
 import {
   useSynergyForStudents, updateTeamStatus, approveAll, publishAll, runGeneration,
-  rebalanceTeam, renameTeam, type Team,
+  rebalanceTeam, renameTeam, deleteTeam, type Team,
 } from "@/lib/synergy";
 import { useStudents } from "@/lib/useStudents";
-import { Play, CheckCircle2, Send, Users2, Eye, Pencil, Shuffle } from "lucide-react";
+import { Play, CheckCircle2, Send, Users2, Eye, Pencil, Shuffle, Trash2, AlertTriangle } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
