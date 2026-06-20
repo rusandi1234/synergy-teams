@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -9,13 +9,6 @@ import { Sparkles } from "lucide-react";
 export const Route = createFileRoute("/auth")({
   ssr: false,
   head: () => ({
-    meta: [
-      { title: "Faculty Sign In · SYNERGY" },
-      { name: "description", content: "Sign in to the SYNERGY faculty workspace." },
-    ],
-  }),
-  component: AuthPage,
-});
     meta: [
       { title: "Faculty Sign In · SYNERGY" },
       { name: "description", content: "Sign in to the SYNERGY faculty workspace." },
