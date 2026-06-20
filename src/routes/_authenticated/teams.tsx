@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { PageHeader, Badge } from "@/components/AppLayout";
+import { CompatibilityRing, ScoreBar } from "@/components/SynergyUI";
 import { useSynergy, updateTeamStatus, approveAll, publishAll, runGeneration } from "@/lib/synergy";
 import { useStudents } from "@/lib/useStudents";
-import { Play, CheckCircle2, Send } from "lucide-react";
+import { Play, CheckCircle2, Send, Users2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/teams")({
   head: () => ({
@@ -40,55 +41,61 @@ function TeamsPage() {
       />
 
       {!teams.length ? (
-        <div className="bg-card border border-border rounded-xl p-10 text-center text-muted-foreground">
-          No teams yet. Head to the Faculty Dashboard and click <span className="font-medium">Generate Teams</span>.
+        <div className="surface-elevated p-12 text-center">
+          <Users2 className="size-10 mx-auto text-muted-foreground/40 mb-3" />
+          <div className="text-muted-foreground">
+            No teams yet. Head to the Faculty Dashboard and click <span className="font-medium text-foreground">Generate Teams</span>.
+          </div>
         </div>
       ) : (
         <div className="grid lg:grid-cols-2 gap-5">
           {teams.map(t => (
-            <div key={t.id} className="bg-card border border-border rounded-xl p-5 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="text-lg font-semibold">{t.name}</div>
+            <div key={t.id} className="surface-elevated p-5 hover:shadow-[var(--shadow-elegant)] transition-all relative overflow-hidden group">
+              <div className="absolute -top-16 -right-16 size-40 rounded-full bg-primary/5 blur-3xl pointer-events-none group-hover:bg-primary/10 transition" />
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="text-lg font-bold tracking-tight">{t.name}</div>
                   <div className="text-xs text-muted-foreground mt-0.5">
                     {t.members.length} members · avg workload {t.avgWorkload}%
                   </div>
+                  <div className="mt-2">
+                    <Badge tone={t.status === "Published" ? "success" : t.status === "Approved" ? "info" : "warning"}>{t.status}</Badge>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className={`text-3xl font-semibold ${compatTone(t.compatibility)}`}>{t.compatibility}%</div>
-                  <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Compatibility</div>
-                </div>
+                <CompatibilityRing value={t.compatibility} size={88} />
               </div>
 
-              <div className="mt-4 grid grid-cols-4 gap-2 text-center">
-                <ScoreBar label="Skill" value={t.scores.skillDiversity} />
-                <ScoreBar label="Avail." value={t.scores.availability} />
-                <ScoreBar label="Roles" value={t.scores.roleCompat} />
-                <ScoreBar label="Balance" value={t.scores.workloadBalance} />
+              <div className="relative mt-5 grid grid-cols-2 gap-x-5 gap-y-3">
+                <ScoreBar label="Skill Diversity" value={t.scores.skillDiversity} />
+                <ScoreBar label="Availability" value={t.scores.availability} />
+                <ScoreBar label="Role Coverage" value={t.scores.roleCompat} />
+                <ScoreBar label="Workload Balance" value={t.scores.workloadBalance} />
               </div>
 
-              <div className="mt-4 space-y-2">
+              <div className="relative mt-5 space-y-2">
                 {t.members.map(m => (
-                  <div key={m.id} className="flex items-center justify-between text-sm border border-border rounded-md px-3 py-2">
-                    <div>
-                      <div className="font-medium">{m.name}</div>
-                      <div className="text-xs text-muted-foreground">{m.skills.slice(0, 3).join(" · ")}</div>
+                  <div key={m.id} className="flex items-center justify-between text-sm border border-border rounded-lg px-3 py-2 bg-background/40">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="size-8 rounded-full bg-gradient-to-br from-primary/20 to-navy/20 grid place-items-center text-[11px] font-bold shrink-0">
+                        {m.name.split(" ").map(p => p[0]).slice(0, 2).join("")}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-medium truncate">{m.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{m.skills.slice(0, 3).join(" · ")}</div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 shrink-0">
                       <Badge tone={roleTone(m.role)}>{m.role}</Badge>
-                      <span className="text-xs text-muted-foreground tabular-nums">{m.workload}%</span>
+                      <span className="text-xs text-muted-foreground tabular-nums w-9 text-right">{m.workload}%</span>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="mt-4 flex items-center justify-between">
-                <Badge tone={t.status === "Published" ? "success" : t.status === "Approved" ? "info" : "warning"}>{t.status}</Badge>
-                <div className="flex gap-2">
-                  <button className="btn-ghost text-xs" onClick={() => updateTeamStatus(t.id, "Pending Review")}>Pending</button>
-                  <button className="btn-secondary text-xs" onClick={() => updateTeamStatus(t.id, "Approved")}>Approve</button>
-                  <button className="btn-primary text-xs" onClick={() => updateTeamStatus(t.id, "Published")}>Publish</button>
-                </div>
+              <div className="relative mt-5 flex items-center justify-end gap-2">
+                <button className="btn-ghost text-xs" onClick={() => updateTeamStatus(t.id, "Pending Review")}>Pending</button>
+                <button className="btn-secondary text-xs" onClick={() => updateTeamStatus(t.id, "Approved")}>Approve</button>
+                <button className="btn-primary text-xs" onClick={() => updateTeamStatus(t.id, "Published")}>Publish</button>
               </div>
             </div>
           ))}
@@ -96,24 +103,6 @@ function TeamsPage() {
       )}
     </>
   );
-}
-
-function ScoreBar({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 h-1.5 rounded-full bg-muted overflow-hidden">
-        <div className={`h-full ${value > 70 ? "bg-success" : value > 45 ? "bg-warning" : "bg-destructive"}`} style={{ width: `${value}%` }} />
-      </div>
-      <div className="text-xs mt-1 tabular-nums">{value}%</div>
-    </div>
-  );
-}
-
-function compatTone(v: number) {
-  if (v >= 80) return "text-success";
-  if (v >= 60) return "text-warning";
-  return "text-destructive";
 }
 
 function roleTone(r: string): any {
