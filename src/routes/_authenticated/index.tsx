@@ -31,6 +31,8 @@ function Dashboard() {
   const { data: students = [], isLoading } = useStudents();
   const { teams, conflicts, recommendations } = useSynergyForStudents(students);
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const navigate = useNavigate();
+  const demoRunning = useRef(false);
 
   const avgCompat = useMemo(
     () => (teams.length ? Math.round(teams.reduce((a, t) => a + t.compatibility, 0) / teams.length) : 0),
@@ -52,17 +54,24 @@ function Dashboard() {
   };
 
   const onDemo = async () => {
+    if (demoRunning.current) return;
     if (!students.length) return toast.error("No students loaded yet.");
-    toast.info("Demo: generating teams…");
-    runGeneration(students);
-    await new Promise(r => setTimeout(r, 600));
-    toast.info("Demo: reviewing conflicts…");
-    await new Promise(r => setTimeout(r, 600));
-    approveAll();
-    toast.info("Demo: approving teams…");
-    await new Promise(r => setTimeout(r, 500));
-    publishAll();
-    toast.success("Demo complete · teams published");
+    demoRunning.current = true;
+    const toastId = toast.loading("Running demo · generating teams…");
+    try {
+      const { teams: t, conflicts: c } = runGeneration(students);
+      await new Promise(r => setTimeout(r, 500));
+      toast.loading(`Reviewing ${c.length} conflicts…`, { id: toastId });
+      await new Promise(r => setTimeout(r, 500));
+      approveAll();
+      toast.loading("Approving teams…", { id: toastId });
+      await new Promise(r => setTimeout(r, 500));
+      publishAll();
+      toast.success(`Demo complete · ${t.length} teams published`, { id: toastId });
+      navigate({ to: "/teams" });
+    } finally {
+      demoRunning.current = false;
+    }
   };
 
   const stage =
