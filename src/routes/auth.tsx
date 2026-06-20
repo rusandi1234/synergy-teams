@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -182,7 +182,7 @@ function AuthPage() {
               </button>
               <div className="flex items-center justify-between text-sm pt-2">
                 <button type="button" onClick={() => setMode("forgot")} className="text-primary hover:underline">Forgot password?</button>
-                <button type="button" onClick={() => setMode("signup")} className="text-primary hover:underline">Register</button>
+                <Link to="/student-login" className="text-primary hover:underline">Student login</Link>
               </div>
             </form>
           )}
