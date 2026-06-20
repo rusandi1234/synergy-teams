@@ -156,18 +156,21 @@ function StudentDashboard() {
     return <div className="text-sm text-muted-foreground">Loading your profile…</div>;
   }
 
-  if (isError || !profile) {
+  if (isError) {
     return (
       <div className="surface-elevated p-8 text-center">
         <h2 className="text-lg font-semibold text-destructive">Unable to load student profile</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          {isError
-            ? (error as Error)?.message ?? "Something went wrong loading your record."
-            : `No student record found for ${user.email}. Please contact faculty to be added.`}
+          {(error as Error)?.message ?? "Something went wrong loading your record."}
         </p>
       </div>
     );
   }
+
+  if (!profile) {
+    return <div className="text-sm text-muted-foreground">Redirecting to profile setup…</div>;
+  }
+
 
   const scrollTo = (ref: React.RefObject<HTMLDivElement | null>) =>
     ref.current?.scrollIntoView({ behavior: "smooth", block: "start" });
