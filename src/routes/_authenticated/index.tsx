@@ -221,6 +221,23 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish all teams?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This marks every team as Published and is immediately visible to students. Resolve high-severity conflicts first if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { publishAll(); toast.success("Teams published"); }}>
+              Publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
