@@ -61,25 +61,28 @@ type TaskStatus = "Pending" | "In Progress" | "Done";
 function StudentDashboard() {
   const { user } = AuthRoute.useRouteContext();
   const qc = useQueryClient();
-  const { data: profile, isLoading, isError, error } = useMyProfile(user.email);
+  const { data: profile, isLoading, isError, error } = useMyProfile(user.id);
   const { data: allStudents = [] } = useStudents();
   const { teams } = useSynergyForStudents(allStudents);
 
+  // Match by name OR email against the external roster used for team formation
   const myTeam = useMemo(
-    () => teams.find(t => t.members.some(m => String(m.id) === String(profile?.student_id))),
-    [teams, profile?.student_id],
+    () => teams.find(t => t.members.some(m =>
+      profile && (m.name?.toLowerCase() === profile.name?.toLowerCase())
+    )),
+    [teams, profile],
   );
 
-  const skills = parseSkills(profile?.skills);
+  const skills = profile?.skills ?? [];
   const workloadPct = profile?.workload != null ? Math.min(100, profile.workload * 20) : 0;
 
   // Local task state (persisted per-team in localStorage)
   const taskKey = myTeam ? `synergy-tasks-${myTeam.id}` : undefined;
   const defaultTasks = useMemo(() => myTeam ? [
     { id: 1, title: `Kickoff sync for ${myTeam.name}`, status: "Pending" as TaskStatus },
-    { id: 2, title: `Share your ${profile?.Roles ?? "role"} deliverables`, status: "In Progress" as TaskStatus },
+    { id: 2, title: `Share your ${profile?.preferred_role ?? "role"} deliverables`, status: "In Progress" as TaskStatus },
     { id: 3, title: "Weekly progress update", status: "Pending" as TaskStatus },
-  ] : [], [myTeam, profile?.Roles]);
+  ] : [], [myTeam, profile?.preferred_role]);
   const [tasks, setTasks] = useState(defaultTasks);
   useEffect(() => {
     if (!taskKey) { setTasks([]); return; }
@@ -109,31 +112,31 @@ function StudentDashboard() {
   useEffect(() => {
     if (!profile) return;
     setFName(profile.name ?? "");
-    setFSkills(profile.skills ?? "");
+    setFSkills((profile.skills ?? []).join(", "));
     setFAvail(profile.availability ?? AVAIL[3]);
-    setFRole(profile.Roles ?? ROLES[0]);
+    setFRole(profile.preferred_role ?? ROLES[0]);
     setFWorkload(profile.workload ?? 3);
   }, [profile]);
 
   const saveProfile = useMutation({
     mutationFn: async () => {
       if (!profile) throw new Error("No profile loaded");
-      const { error } = await externalSupabase
-        .from("Students")
+      const skillsArr = fSkills.split(/[,;/|]| and /i).map(s => s.trim()).filter(Boolean);
+      const { error } = await supabase
+        .from("student_profiles")
         .update({
           name: fName,
-          skills: fSkills,
+          skills: skillsArr,
           availability: fAvail,
-          Roles: fRole,
+          preferred_role: fRole,
           workload: fWorkload,
         })
-        .eq("student_id", profile.student_id);
+        .eq("user_id", profile.user_id);
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Profile updated");
-      qc.invalidateQueries({ queryKey: ["my-profile"] });
-      qc.invalidateQueries({ queryKey: ["external-students"] });
+      qc.invalidateQueries({ queryKey: ["my-student-profile"] });
       setEditOpen(false);
     },
     onError: (e: any) => toast.error(e?.message ?? "Could not save profile"),
