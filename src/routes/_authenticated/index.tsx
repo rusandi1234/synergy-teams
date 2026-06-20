@@ -11,6 +11,11 @@ import {
   Play, CheckCircle2, Send, RotateCcw, AlertTriangle, Workflow, Sparkles,
   Users, Users2, Target, Activity, Lightbulb, ArrowRight, Zap,
 } from "lucide-react";
+import { useState } from "react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/_authenticated/")({
   head: () => ({
@@ -25,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/")({
 function Dashboard() {
   const { data: students = [], isLoading } = useStudents();
   const { teams, conflicts, recommendations } = useSynergyForStudents(students);
+  const [confirmPublish, setConfirmPublish] = useState(false);
 
   const avgCompat = useMemo(
     () => (teams.length ? Math.round(teams.reduce((a, t) => a + t.compatibility, 0) / teams.length) : 0),
@@ -137,7 +143,7 @@ function Dashboard() {
             <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); approveAll(); toast.success("All teams approved"); }} className="btn-secondary">
               <CheckCircle2 className="size-4" /> Approve All
             </button>
-            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); publishAll(); toast.success("Teams published"); }} className="btn-primary">
+            <button onClick={() => { if (!teams.length) return toast.error("Generate teams first"); setConfirmPublish(true); }} className="btn-primary">
               <Send className="size-4" /> Publish Teams
             </button>
             <button onClick={() => { resetSynergy(); toast.message("Workflow reset"); }} className="btn-ghost">
@@ -215,6 +221,23 @@ function Dashboard() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={confirmPublish} onOpenChange={setConfirmPublish}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Publish all teams?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This marks every team as Published and is immediately visible to students. Resolve high-severity conflicts first if needed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { publishAll(); toast.success("Teams published"); }}>
+              Publish
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

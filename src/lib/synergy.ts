@@ -291,3 +291,42 @@ export function publishAll() {
 export function resetSynergy() {
   setState({ teams: [], conflicts: [], recommendations: [], sourceRosterKey: undefined });
 }
+
+export function renameTeam(teamId: string, name: string) {
+  const teams = state.teams.map(t => (t.id === teamId ? { ...t, name } : t));
+  const conflicts = state.conflicts.map(c => (c.teamId === teamId ? { ...c, teamName: name } : c));
+  setState({ teams, conflicts });
+}
+
+/** Rebalance: swap the highest-workload member of this team with the lowest-workload member of another team. */
+export function rebalanceTeam(teamId: string): { ok: boolean; message: string } {
+  const teams = [...state.teams];
+  const idx = teams.findIndex(t => t.id === teamId);
+  if (idx < 0) return { ok: false, message: "Team not found" };
+  const team = teams[idx];
+  if (team.members.length === 0) return { ok: false, message: "Team has no members" };
+
+  const heaviest = [...team.members].sort((a, b) => b.workload - a.workload)[0];
+  let bestOther = -1;
+  let bestLight: Student | null = null;
+  let bestDelta = -Infinity;
+  teams.forEach((other, oi) => {
+    if (oi === idx || other.members.length === 0) return;
+    const lightest = [...other.members].sort((a, b) => a.workload - b.workload)[0];
+    const delta = heaviest.workload - lightest.workload;
+    if (delta > bestDelta) { bestDelta = delta; bestOther = oi; bestLight = lightest; }
+  });
+  if (bestOther < 0 || !bestLight || bestDelta <= 5) {
+    return { ok: false, message: "No beneficial swap available" };
+  }
+  const lightPick: Student = bestLight;
+  const newTeam = { ...team, members: team.members.map(m => m.id === heaviest.id ? lightPick : m) };
+  const otherTeam = teams[bestOther];
+  const newOther = { ...otherTeam, members: otherTeam.members.map(m => m.id === lightPick.id ? heaviest : m) };
+  teams[idx] = recomputeTeam(newTeam, idx);
+  teams[bestOther] = recomputeTeam(newOther, bestOther);
+  const conflicts = detectConflicts(teams);
+  const recommendations = buildRecommendations(teams, conflicts);
+  setState({ teams, conflicts, recommendations });
+  return { ok: true, message: `Swapped ${heaviest.name} ↔ ${lightPick.name}` };
+}
