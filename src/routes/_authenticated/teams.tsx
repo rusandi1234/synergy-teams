@@ -35,6 +35,7 @@ function TeamsPage() {
   const [editing, setEditing] = useState<Team | null>(null);
   const [editName, setEditName] = useState("");
   const [confirmPublish, setConfirmPublish] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<Team | null>(null);
 
   const openEdit = (t: Team) => { setEditing(t); setEditName(t.name); };
   const saveEdit = () => {
