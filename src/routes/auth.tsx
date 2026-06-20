@@ -8,11 +8,14 @@ import { Sparkles } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
-  beforeLoad: async () => {
-    const { data } = await supabase.auth.getUser();
-    if (data.user) throw redirect({ to: "/" });
-  },
   head: () => ({
+    meta: [
+      { title: "Faculty Sign In · SYNERGY" },
+      { name: "description", content: "Sign in to the SYNERGY faculty workspace." },
+    ],
+  }),
+  component: AuthPage,
+});
     meta: [
       { title: "Faculty Sign In · SYNERGY" },
       { name: "description", content: "Sign in to the SYNERGY faculty workspace." },
