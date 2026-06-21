@@ -60,9 +60,11 @@ function parseSkills(raw: string): string[] {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [mode, setMode] = useState<Mode>("signin");
   const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
+
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
