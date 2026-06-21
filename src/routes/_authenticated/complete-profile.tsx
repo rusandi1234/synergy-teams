@@ -46,8 +46,16 @@ const parseSkills = (raw: string) =>
 function CompleteProfilePage() {
   const { user } = AuthRoute.useRouteContext();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
+
+  const goTo = async (path: "/" | "/student") => {
+    await qc.invalidateQueries({ queryKey: ["user-role"] });
+    await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
+    navigate({ to: path, replace: true });
+  };
+
 
   const metaName = (user.user_metadata as any)?.full_name ?? "";
   const metaRole = (user.user_metadata as any)?.role as Role | undefined;
