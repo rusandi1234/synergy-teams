@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import { Sparkles, GraduationCap, BookOpenCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getUserRole } from "@/lib/useRole";
+
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -58,9 +60,11 @@ function parseSkills(raw: string): string[] {
 
 function AuthPage() {
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [mode, setMode] = useState<Mode>("signin");
   const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
+
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -83,6 +87,9 @@ function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
       if (error) throw error;
       const userId = data.user?.id;
+      // Ensure no stale role/profile cache from a previous session
+      await qc.invalidateQueries({ queryKey: ["user-role"] });
+      await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (!resolvedRole) {
         toast.info("Finish setting up your profile to continue.");
@@ -91,6 +98,7 @@ function AuthPage() {
       }
       toast.success("Welcome back!");
       navigate({ to: redirectFor(resolvedRole), replace: true });
+
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
     } finally { setBusy(false); }
@@ -157,6 +165,8 @@ function AuthPage() {
           }, { onConflict: "user_id" });
         if (profErr) throw profErr;
 
+        await qc.invalidateQueries({ queryKey: ["user-role"] });
+        await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
         toast.success("Account ready — welcome!");
         navigate({ to: "/student", replace: true });
       } else {
@@ -201,6 +211,7 @@ function AuthPage() {
           }, { onConflict: "user_id" });
         if (facErr) throw facErr;
 
+        await qc.invalidateQueries({ queryKey: ["user-role"] });
         toast.success("Faculty account ready — welcome!");
         navigate({ to: "/", replace: true });
       }

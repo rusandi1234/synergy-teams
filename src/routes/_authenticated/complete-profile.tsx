@@ -1,10 +1,12 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import { GraduationCap, BookOpenCheck, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Route as AuthRoute } from "./route";
+
 
 export const Route = createFileRoute("/_authenticated/complete-profile")({
   head: () => ({
@@ -44,8 +46,16 @@ const parseSkills = (raw: string) =>
 function CompleteProfilePage() {
   const { user } = AuthRoute.useRouteContext();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const [role, setRole] = useState<Role>("student");
   const [busy, setBusy] = useState(false);
+
+  const goTo = async (path: "/" | "/student") => {
+    await qc.invalidateQueries({ queryKey: ["user-role"] });
+    await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
+    navigate({ to: path, replace: true });
+  };
+
 
   const metaName = (user.user_metadata as any)?.full_name ?? "";
   const metaRole = (user.user_metadata as any)?.role as Role | undefined;
@@ -71,10 +81,12 @@ function CompleteProfilePage() {
       const table = r === "faculty" ? "faculty_profiles" : "student_profiles";
       const { data: prof } = await supabase
         .from(table as any).select("user_id").eq("user_id", user.id).maybeSingle();
-      if (prof) navigate({ to: r === "faculty" ? "/" : "/student", replace: true });
+      if (prof) await goTo(r === "faculty" ? "/" : "/student");
       else setRole(r);
     })();
-  }, [user.id, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,7 +116,7 @@ function CompleteProfilePage() {
         }, { onConflict: "user_id" });
         if (error) throw error;
         toast.success("Profile complete — welcome!");
-        navigate({ to: "/student", replace: true });
+        await goTo("/student");
       } else {
         const parsed = facultySchema.safeParse({ name, department });
         if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
@@ -116,7 +128,7 @@ function CompleteProfilePage() {
         }, { onConflict: "user_id" });
         if (error) throw error;
         toast.success("Profile complete — welcome!");
-        navigate({ to: "/", replace: true });
+        await goTo("/");
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Could not save profile");
