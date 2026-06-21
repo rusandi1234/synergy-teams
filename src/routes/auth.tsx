@@ -87,6 +87,9 @@ function AuthPage() {
       const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
       if (error) throw error;
       const userId = data.user?.id;
+      // Ensure no stale role/profile cache from a previous session
+      await qc.invalidateQueries({ queryKey: ["user-role"] });
+      await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
       const resolvedRole = userId ? await getUserRole(userId) : null;
       if (!resolvedRole) {
         toast.info("Finish setting up your profile to continue.");
@@ -95,6 +98,7 @@ function AuthPage() {
       }
       toast.success("Welcome back!");
       navigate({ to: redirectFor(resolvedRole), replace: true });
+
     } catch (err: any) {
       toast.error(err?.message ?? "Sign in failed");
     } finally { setBusy(false); }
