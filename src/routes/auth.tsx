@@ -211,6 +211,7 @@ function AuthPage() {
           }, { onConflict: "user_id" });
         if (facErr) throw facErr;
 
+        await qc.invalidateQueries({ queryKey: ["user-role"] });
         toast.success("Faculty account ready — welcome!");
         navigate({ to: "/", replace: true });
       }
