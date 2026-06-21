@@ -116,7 +116,7 @@ function CompleteProfilePage() {
         }, { onConflict: "user_id" });
         if (error) throw error;
         toast.success("Profile complete — welcome!");
-        navigate({ to: "/student", replace: true });
+        await goTo("/student");
       } else {
         const parsed = facultySchema.safeParse({ name, department });
         if (!parsed.success) { toast.error(parsed.error.issues[0].message); return; }
