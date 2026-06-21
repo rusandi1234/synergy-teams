@@ -165,6 +165,8 @@ function AuthPage() {
           }, { onConflict: "user_id" });
         if (profErr) throw profErr;
 
+        await qc.invalidateQueries({ queryKey: ["user-role"] });
+        await qc.invalidateQueries({ queryKey: ["my-student-profile"] });
         toast.success("Account ready — welcome!");
         navigate({ to: "/student", replace: true });
       } else {
