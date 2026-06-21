@@ -128,7 +128,7 @@ function CompleteProfilePage() {
         }, { onConflict: "user_id" });
         if (error) throw error;
         toast.success("Profile complete — welcome!");
-        navigate({ to: "/", replace: true });
+        await goTo("/");
       }
     } catch (err: any) {
       toast.error(err?.message ?? "Could not save profile");
