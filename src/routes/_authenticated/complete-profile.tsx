@@ -81,10 +81,12 @@ function CompleteProfilePage() {
       const table = r === "faculty" ? "faculty_profiles" : "student_profiles";
       const { data: prof } = await supabase
         .from(table as any).select("user_id").eq("user_id", user.id).maybeSingle();
-      if (prof) navigate({ to: r === "faculty" ? "/" : "/student", replace: true });
+      if (prof) await goTo(r === "faculty" ? "/" : "/student");
       else setRole(r);
     })();
-  }, [user.id, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
+
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
