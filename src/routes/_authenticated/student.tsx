@@ -11,6 +11,7 @@ import { useStudents } from "@/lib/useStudents";
 import { useSynergyForStudents } from "@/lib/synergy";
 import {
   User, Sparkles, Calendar, Briefcase, Activity, Users2, ListChecks, Target, Pencil, Eye,
+  Star, Github, FolderOpen, BookOpen, Award, CheckCircle2, Clock, XCircle, Gauge, TrendingUp,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
