@@ -1,13 +1,16 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User, Shuffle } from "lucide-react";
+import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User, Shuffle, FileCheck2, ClipboardCheck, Brain } from "lucide-react";
 import type { ReactNode } from "react";
 
 const FACULTY_NAV = [
   { to: "/", label: "Faculty Dashboard", icon: LayoutDashboard },
   { to: "/students", label: "Students", icon: Users },
   { to: "/teams", label: "Teams", icon: Users2 },
+  { to: "/approvals", label: "Approvals", icon: ClipboardCheck },
   { to: "/conflicts", label: "Conflicts", icon: AlertTriangle },
   { to: "/rebalancing", label: "Rebalancing", icon: Shuffle },
+  { to: "/evidence", label: "Evidence Review", icon: FileCheck2 },
+  { to: "/recommendations", label: "AI Recommendations", icon: Brain },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
