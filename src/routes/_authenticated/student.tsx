@@ -468,10 +468,20 @@ function Detail({ label, value }: { label: string; value: string }) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-1 font-medium">{value}</div>
+      <div className="mt-1 font-medium break-words">{value}</div>
     </div>
   );
 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">{title}</div>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
 
 function FieldEdit({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
