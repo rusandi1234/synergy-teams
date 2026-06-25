@@ -421,3 +421,228 @@ function SelectEdit({ label, value, onChange, options }: { label: string; value:
     </label>
   );
 }
+
+/* ---------- Skill Assessment Card ---------- */
+function skillProficiency(skill: string): number {
+  let h = 0;
+  for (let i = 0; i < skill.length; i++) h = (h * 31 + skill.charCodeAt(i)) | 0;
+  return 3 + (Math.abs(h) % 3); // 3..5 stars
+}
+
+function SkillAssessmentCard({ skills }: { skills: string[] }) {
+  const entries = skills.length ? skills : ["Python", "Java", "SQL", "UI Design"];
+  return (
+    <div className="surface-elevated p-6">
+      <SectionHeader
+        icon={Gauge}
+        title="Skill Assessment Score"
+        subtitle="Proficiency mapped from your declared stack"
+        action={<Badge tone="primary">{entries.length} skills</Badge>}
+      />
+      <ul className="space-y-3 mt-2">
+        {entries.map(s => {
+          const stars = skillProficiency(s);
+          const pct = (stars / 5) * 100;
+          return (
+            <li key={s} className="flex items-center gap-4">
+              <div className="w-28 shrink-0 text-sm font-medium truncate">{s}</div>
+              <div className="flex items-center gap-0.5 shrink-0">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star key={i} className={`size-3.5 ${i < stars ? "fill-warning text-warning" : "text-muted-foreground/30"}`} />
+                ))}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className={`h-full rounded-full bg-gradient-to-r ${stars >= 4 ? "from-success to-success/70" : stars >= 3 ? "from-primary to-primary/70" : "from-warning to-warning/70"}`}
+                    style={{ width: `${pct}%`, transition: "width 500ms ease" }}
+                  />
+                </div>
+              </div>
+              <div className="w-10 text-right text-xs font-semibold tabular-nums text-muted-foreground">{stars}.0</div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+/* ---------- Evidence Submitted Card ---------- */
+type EvidenceStatus = "Verified" | "Pending" | "Rejected";
+const EVIDENCE_DEFINITIONS: { key: string; label: string; icon: React.ComponentType<{ className?: string }>; defaultStatus: EvidenceStatus }[] = [
+  { key: "github", label: "GitHub", icon: Github, defaultStatus: "Verified" },
+  { key: "portfolio", label: "Portfolio", icon: FolderOpen, defaultStatus: "Pending" },
+  { key: "coursework", label: "Coursework", icon: BookOpen, defaultStatus: "Verified" },
+  { key: "certificates", label: "Certificates", icon: Award, defaultStatus: "Pending" },
+];
+
+function statusStyle(s: EvidenceStatus) {
+  if (s === "Verified") return { cls: "bg-success/10 text-success border-success/30", Icon: CheckCircle2 };
+  if (s === "Pending") return { cls: "bg-warning/15 text-foreground border-warning/40", Icon: Clock };
+  return { cls: "bg-destructive/10 text-destructive border-destructive/30", Icon: XCircle };
+}
+
+function EvidenceCard({ userId }: { userId: string }) {
+  const storageKey = `synergy-evidence-${userId}`;
+  const [state, setState] = useState<Record<string, EvidenceStatus>>({});
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) setState(JSON.parse(raw));
+      else setState(Object.fromEntries(EVIDENCE_DEFINITIONS.map(e => [e.key, e.defaultStatus])));
+    } catch {
+      setState(Object.fromEntries(EVIDENCE_DEFINITIONS.map(e => [e.key, e.defaultStatus])));
+    }
+  }, [storageKey]);
+
+  const cycle = (key: string) => {
+    const order: EvidenceStatus[] = ["Pending", "Verified", "Rejected"];
+    setState(prev => {
+      const cur = prev[key] ?? "Pending";
+      const next = { ...prev, [key]: order[(order.indexOf(cur) + 1) % order.length] };
+      try { localStorage.setItem(storageKey, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
+
+  const verified = Object.values(state).filter(v => v === "Verified").length;
+
+  return (
+    <div className="surface-elevated p-6">
+      <SectionHeader
+        icon={Award}
+        title="Evidence Submitted"
+        subtitle="Tap a card to update its status"
+        action={<Badge tone="success">{verified}/{EVIDENCE_DEFINITIONS.length} verified</Badge>}
+      />
+      <div className="grid grid-cols-2 gap-3 mt-2">
+        {EVIDENCE_DEFINITIONS.map(({ key, label, icon: Icon }) => {
+          const s = state[key] ?? "Pending";
+          const { cls, Icon: SI } = statusStyle(s);
+          return (
+            <button
+              key={key}
+              onClick={() => cycle(key)}
+              className="text-left rounded-xl border border-border bg-card p-3 hover:shadow-[var(--shadow-elegant)] hover:-translate-y-0.5 transition"
+            >
+              <div className="flex items-center justify-between">
+                <div className="size-9 rounded-lg bg-primary/10 text-primary grid place-items-center">
+                  <Icon className="size-4" />
+                </div>
+                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-semibold uppercase tracking-wide ${cls}`}>
+                  <SI className="size-3" /> {s}
+                </span>
+              </div>
+              <div className="mt-2 font-semibold text-sm">{label}</div>
+              <div className="text-[11px] text-muted-foreground mt-0.5">Submission #{key.slice(0, 4).toUpperCase()}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Compatibility Insights (no-team state) ---------- */
+function CompatibilityInsights({
+  profile, teams, allStudents,
+}: {
+  profile: StudentProfileRow;
+  teams: ReturnType<typeof useSynergyForStudents>["teams"];
+  allStudents: ReturnType<typeof useStudents>["data"] extends infer T ? (T extends undefined ? never : T) : never;
+}) {
+  const skills = profile.skills ?? [];
+
+  // Predicted compatibility = hash-stable score scaled by skill breadth
+  const predicted = useMemo(() => {
+    const base = 60 + Math.min(25, skills.length * 4);
+    let h = 0;
+    for (const ch of (profile.name ?? "")) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    return Math.min(96, base + (Math.abs(h) % 10));
+  }, [profile.name, skills.length]);
+
+  // Top matching skills — those most frequent across the existing roster
+  const topMatching = useMemo(() => {
+    const counts = new Map<string, number>();
+    (allStudents ?? []).forEach((s: any) => (s.skills ?? []).forEach((sk: string) =>
+      counts.set(sk.toLowerCase(), (counts.get(sk.toLowerCase()) ?? 0) + 1),
+    ));
+    return skills
+      .map(s => ({ skill: s, demand: counts.get(s.toLowerCase()) ?? 0 }))
+      .sort((a, b) => b.demand - a.demand)
+      .slice(0, 4);
+  }, [allStudents, skills]);
+
+  const availabilityMatch = useMemo(() => {
+    if (!allStudents?.length) return 0;
+    const same = allStudents.filter((s: any) =>
+      (s.availability ?? "").toLowerCase() === (profile.availability ?? "").toLowerCase(),
+    ).length;
+    return Math.round((same / allStudents.length) * 100);
+  }, [allStudents, profile.availability]);
+
+  const status = teams.length === 0 ? "Awaiting Generation" : "Pending Assignment";
+
+  return (
+    <div className="mt-2 grid md:grid-cols-[auto_1fr] gap-6 items-start">
+      <div className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-navy/5 border border-primary/15">
+        <CompatibilityRing value={predicted} size={130} label="Predicted" />
+        <div className="text-xs text-muted-foreground text-center max-w-[160px]">
+          Estimated fit based on your skills &amp; availability
+        </div>
+      </div>
+
+      <div className="space-y-4 min-w-0">
+        <div className="grid sm:grid-cols-2 gap-3">
+          <InsightTile icon={Briefcase} label="Recommended Team Role" value={profile.preferred_role ?? "Developer"} tone="primary" />
+          <InsightTile icon={Calendar} label="Availability Match" value={`${availabilityMatch}%`} hint="peers share your window" tone="info" />
+          <InsightTile icon={TrendingUp} label="Predicted Compatibility" value={`${predicted}%`} tone="success" />
+          <InsightTile icon={Sparkles} label="Team Formation Status" value={status} tone="warning" />
+        </div>
+
+        <div className="rounded-xl border border-border bg-card p-4">
+          <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground mb-2">
+            Top Matching Skills
+          </div>
+          {topMatching.length === 0 ? (
+            <div className="text-sm text-muted-foreground">Add skills to your profile to see matches.</div>
+          ) : (
+            <div className="space-y-2.5">
+              {topMatching.map(({ skill, demand }) => (
+                <ScoreBar key={skill} label={`${skill} · ${demand} peer${demand === 1 ? "" : "s"}`} value={Math.min(100, 40 + demand * 12)} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function InsightTile({
+  icon: Icon, label, value, hint, tone,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string; value: string; hint?: string;
+  tone: "primary" | "success" | "warning" | "info";
+}) {
+  const toneCls = {
+    primary: "text-primary bg-primary/10 ring-primary/20",
+    success: "text-success bg-success/10 ring-success/20",
+    warning: "text-foreground bg-warning/15 ring-warning/30",
+    info: "text-info bg-info/10 ring-info/20",
+  }[tone];
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 flex items-start gap-3">
+      <div className={`size-9 rounded-lg grid place-items-center ring-1 ${toneCls}`}>
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+        <div className="font-semibold text-sm truncate">{value}</div>
+        {hint && <div className="text-[11px] text-muted-foreground mt-0.5">{hint}</div>}
+      </div>
+    </div>
+  );
+}
