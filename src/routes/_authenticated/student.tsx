@@ -243,6 +243,12 @@ function StudentDashboard() {
         <MetricCard label="Compatibility" value={myTeam ? `${myTeam.compatibility}%` : "—"} hint={myTeam ? "With your team" : "No team yet"} icon={Target} accent="success" />
       </div>
 
+      {/* SKILL ASSESSMENT + EVIDENCE */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        <SkillAssessmentCard skills={skills} />
+        <EvidenceCard userId={user.id} />
+      </div>
+
       {/* TEAM + TASKS */}
       <div className="grid lg:grid-cols-3 gap-6">
         <div ref={teamRef} className="lg:col-span-2 surface-elevated p-6">
@@ -258,9 +264,7 @@ function StudentDashboard() {
             )}
           />
           {!myTeam ? (
-            <div className="text-sm text-muted-foreground py-6">
-              Faculty hasn't published a team for you yet. Check back soon.
-            </div>
+            <CompatibilityInsights profile={profile} teams={teams} allStudents={allStudents} />
           ) : (
             <div className="grid sm:grid-cols-2 gap-3 mt-3">
               {myTeam.members.map(m => (
