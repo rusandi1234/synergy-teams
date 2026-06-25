@@ -4,20 +4,44 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/AppLayout";
 import { resetSynergy } from "@/lib/synergy";
-import { useRole, type AppRole } from "@/lib/useRole";
+import { getUserRole, useRole, type AppRole } from "@/lib/useRole";
+
+const FACULTY_ROUTES = ["/", "/students", "/teams", "/conflicts", "/analytics", "/approvals", "/rebalancing", "/evidence", "/recommendations"];
+const STUDENT_ROUTES = ["/student"];
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
     if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+
+    // Server-trusted role lookup (RLS-enforced) — gate before any route renders.
+    let role: AppRole | null = null;
+    try {
+      role = await getUserRole(data.user.id);
+    } catch {
+      role = null;
+    }
+
+    const path = location.pathname;
+    if (!role) {
+      if (path !== "/complete-profile") {
+        throw redirect({ to: "/complete-profile" });
+      }
+    } else if (role === "student") {
+      if (path !== "/complete-profile" && !STUDENT_ROUTES.includes(path)) {
+        throw redirect({ to: "/student" });
+      }
+    } else if (role === "faculty") {
+      if (STUDENT_ROUTES.includes(path)) {
+        throw redirect({ to: "/" });
+      }
+    }
+
+    return { user: data.user, role };
   },
   component: AuthLayout,
 });
-
-const FACULTY_ROUTES = ["/", "/students", "/teams", "/conflicts", "/analytics"];
-const STUDENT_ROUTES = ["/student"];
 
 function AuthLayout() {
   const { user } = Route.useRouteContext();
@@ -28,11 +52,10 @@ function AuthLayout() {
   const [bootstrapped, setBootstrapped] = useState(false);
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || isError) return;
     const path = location.pathname;
 
-    // No role assigned yet → send to profile completion (unless already there)
-    if (!isError && !role) {
+    if (!role) {
       if (path !== "/complete-profile") {
         navigate({ to: "/complete-profile", replace: true });
         return;
@@ -41,24 +64,19 @@ function AuthLayout() {
       return;
     }
 
-    if (isError) return;
-
-    // Allow the completion page for any signed-in user
     if (path === "/complete-profile") { setBootstrapped(true); return; }
 
-    if (role === "student") {
-      if (FACULTY_ROUTES.includes(path) && !STUDENT_ROUTES.includes(path)) {
-        navigate({ to: "/student", replace: true });
-        return;
-      }
-    } else if (role === "faculty") {
-      if (STUDENT_ROUTES.includes(path)) {
-        navigate({ to: "/", replace: true });
-        return;
-      }
+    if (role === "student" && !STUDENT_ROUTES.includes(path)) {
+      navigate({ to: "/student", replace: true });
+      return;
+    }
+    if (role === "faculty" && STUDENT_ROUTES.includes(path)) {
+      navigate({ to: "/", replace: true });
+      return;
     }
     setBootstrapped(true);
   }, [role, isLoading, isError, location.pathname, navigate]);
+
 
   const onSignOut = async () => {
     await queryClient.cancelQueries();
