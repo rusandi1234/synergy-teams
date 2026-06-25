@@ -311,3 +311,33 @@ function roleTone(r: string): any {
     : r === "Business Analyst" ? "success"
     : r === "Team Leader" ? "navy" : "default";
 }
+
+function WeightedFactor({ weight, label, value, explanation }: { weight: number; label: string; value: number; explanation: string }) {
+  return (
+    <div className="border border-border rounded-lg p-3 bg-background/60">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold">{label}</span>
+        <span className="text-muted-foreground tabular-nums">weight {weight}% · score {value}</span>
+      </div>
+      <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full" style={{ width: `${value}%` }} />
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-1.5 italic">{explanation}</p>
+    </div>
+  );
+}
+
+function SummaryBlock({ tone, title, children }: { tone: "success" | "warning" | "info"; title: string; children: React.ReactNode }) {
+  const cls = tone === "success" ? "border-success/30 bg-success/5"
+    : tone === "warning" ? "border-warning/30 bg-warning/5"
+    : "border-info/30 bg-info/5";
+  return (
+    <div className={`rounded-lg p-3 border ${cls}`}>
+      <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">{title}</div>
+      <ul className="text-xs space-y-1 list-disc pl-4 marker:text-muted-foreground">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
