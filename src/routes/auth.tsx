@@ -356,6 +356,7 @@ function AuthPage() {
 
           {mode === "signup" && (
             <form onSubmit={onSignUp} className="mt-5 space-y-3">
+              <GoogleButton label="Sign up with Google" />
               <Field label="Full Name" value={name} onChange={setName} autoComplete="name" />
               <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
               <div className="grid grid-cols-2 gap-3">
