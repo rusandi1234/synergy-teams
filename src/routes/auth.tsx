@@ -341,6 +341,7 @@ function AuthPage() {
 
           {mode === "signin" && (
             <form onSubmit={onSignIn} className="mt-6 space-y-3">
+              <GoogleButton label="Continue with Google" />
               <Field label="Email" type="email" value={email} onChange={setEmail} autoComplete="email" />
               <Field label="Password" type="password" value={password} onChange={setPassword} autoComplete="current-password" />
               <button disabled={busy} className="btn-primary w-full justify-center" type="submit">
