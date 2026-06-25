@@ -120,6 +120,20 @@ function StudentDashboard() {
   const [fAvail, setFAvail] = useState(AVAIL[3]);
   const [fRole, setFRole] = useState(ROLES[0]);
   const [fWorkload, setFWorkload] = useState(3);
+
+  // Extended profile (persisted locally; doesn't require schema migration)
+  type Extra = {
+    softSkills: string; availabilityCalendar: string; workloadPref: string;
+    previousProjects: string; certificates: string; github: string; portfolio: string;
+  };
+  const extraKey = `synergy-profile-extra-${user.id}`;
+  const emptyExtra: Extra = { softSkills: "", availabilityCalendar: "", workloadPref: "", previousProjects: "", certificates: "", github: "", portfolio: "" };
+  const [extra, setExtra] = useState<Extra>(emptyExtra);
+  useEffect(() => {
+    try { const raw = localStorage.getItem(extraKey); if (raw) setExtra({ ...emptyExtra, ...JSON.parse(raw) }); } catch {}
+  }, [extraKey]);
+  const setExtraField = (k: keyof Extra, v: string) => setExtra(prev => { const next = { ...prev, [k]: v }; localStorage.setItem(extraKey, JSON.stringify(next)); return next; });
+
   useEffect(() => {
     if (!profile) return;
     setFName(profile.name ?? "");
@@ -128,6 +142,18 @@ function StudentDashboard() {
     setFRole(profile.preferred_role ?? ROLES[0]);
     setFWorkload(profile.workload ?? 3);
   }, [profile]);
+
+  const completion = useMemo(() => {
+    const checks = [
+      !!profile?.name, !!profile?.email, (profile?.skills?.length ?? 0) > 0,
+      !!profile?.availability, !!profile?.preferred_role, (profile?.workload ?? 0) > 0,
+      !!extra.softSkills, !!extra.availabilityCalendar, !!extra.workloadPref,
+      !!extra.previousProjects, !!extra.certificates, !!extra.github, !!extra.portfolio,
+    ];
+    const filled = checks.filter(Boolean).length;
+    return Math.round((filled / checks.length) * 100);
+  }, [profile, extra]);
+
 
   const saveProfile = useMutation({
     mutationFn: async () => {
