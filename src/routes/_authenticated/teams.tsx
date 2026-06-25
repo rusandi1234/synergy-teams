@@ -151,24 +151,61 @@ function TeamsPage() {
         </div>
       )}
 
-      {/* Details Dialog */}
+      {/* Details Dialog — AI Explainability */}
       <Dialog open={!!liveDetail} onOpenChange={(o) => !o && setDetail(null)}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           {liveDetail && (
             <>
               <DialogHeader>
-                <DialogTitle>{liveDetail.name}</DialogTitle>
+                <DialogTitle className="flex items-center gap-2">
+                  <span>{liveDetail.name}</span>
+                  <Badge tone="primary">AI Explainability</Badge>
+                </DialogTitle>
                 <DialogDescription>
-                  {liveDetail.members.length} members · compatibility {liveDetail.compatibility}% · avg workload {liveDetail.avgWorkload}%
+                  How the compatibility score was calculated, weighted by SYNERGY's matching engine.
                 </DialogDescription>
               </DialogHeader>
-              <div className="grid grid-cols-2 gap-4">
-                <ScoreBar label="Skill Diversity" value={liveDetail.scores.skillDiversity} />
-                <ScoreBar label="Availability" value={liveDetail.scores.availability} />
-                <ScoreBar label="Role Coverage" value={liveDetail.scores.roleCompat} />
-                <ScoreBar label="Workload Balance" value={liveDetail.scores.workloadBalance} />
+
+              <div className="flex flex-col md:flex-row items-center gap-6 my-2">
+                <CompatibilityRing value={liveDetail.compatibility} size={140} label="Compatibility" />
+                <div className="flex-1 w-full space-y-3">
+                  <WeightedFactor weight={40} label="Skill Diversity" value={liveDetail.scores.skillDiversity}
+                    explanation={liveDetail.scores.skillDiversity >= 70 ? "Balanced technical and business skills." : "Limited skill coverage — consider adding diversity."} />
+                  <WeightedFactor weight={25} label="Availability" value={liveDetail.scores.availability}
+                    explanation={liveDetail.scores.availability >= 70 ? "Three or more members share common free time." : "Schedules diverge — coordination overhead likely."} />
+                  <WeightedFactor weight={20} label="Role Preference" value={liveDetail.scores.roleCompat}
+                    explanation={liveDetail.scores.roleCompat >= 70 ? "No duplicate leadership preference." : "Role gaps detected — see Conflicts."} />
+                  <WeightedFactor weight={15} label="Workload Balance" value={liveDetail.scores.workloadBalance}
+                    explanation={liveDetail.scores.workloadBalance >= 70 ? "Tasks evenly distributed." : "Workload skewed — rebalance recommended."} />
+                </div>
               </div>
-              <div className="mt-2 space-y-1.5 max-h-72 overflow-auto">
+
+              <div className="grid md:grid-cols-3 gap-3 mt-2">
+                <SummaryBlock tone="success" title="Strengths">
+                  {liveDetail.scores.skillDiversity >= 70 && <li>Strong skill diversity across the team.</li>}
+                  {liveDetail.scores.availability >= 70 && <li>Healthy shared availability window.</li>}
+                  {liveDetail.scores.roleCompat >= 70 && <li>Clear role coverage with no duplicates.</li>}
+                  {liveDetail.scores.workloadBalance >= 70 && <li>Workload distributed evenly.</li>}
+                  {liveDetail.compatibility >= 80 && <li>Top-quartile compatibility score.</li>}
+                </SummaryBlock>
+                <SummaryBlock tone="warning" title="Potential Risks">
+                  {liveDetail.scores.skillDiversity < 60 && <li>Skill overlap may slow delivery.</li>}
+                  {liveDetail.scores.availability < 60 && <li>Limited overlap will hurt sync sessions.</li>}
+                  {liveDetail.scores.roleCompat < 60 && <li>Missing key role(s) — check Conflicts.</li>}
+                  {liveDetail.scores.workloadBalance < 60 && <li>Workload skew puts pressure on heaviest member.</li>}
+                  {liveDetail.members.length < 3 && <li>Team is under-staffed.</li>}
+                </SummaryBlock>
+                <SummaryBlock tone="info" title="Suggested Improvements">
+                  {liveDetail.scores.skillDiversity < 70 && <li>Swap a generalist for a specialist in a missing area.</li>}
+                  {liveDetail.scores.availability < 70 && <li>Align two members on a shared weekly window.</li>}
+                  {liveDetail.scores.roleCompat < 70 && <li>Reassign a duplicate role from another team.</li>}
+                  {liveDetail.scores.workloadBalance < 70 && <li>Run Rebalance to swap a heavy ↔ light pair.</li>}
+                  {liveDetail.compatibility >= 80 && <li>Lock the team and proceed to Publish.</li>}
+                </SummaryBlock>
+              </div>
+
+              <div className="mt-2 space-y-1.5 max-h-56 overflow-auto">
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground px-1">Members</div>
                 {liveDetail.members.map(m => (
                   <div key={m.id} className="flex items-center justify-between border border-border rounded-md px-3 py-2 bg-background/60 text-sm">
                     <div>
@@ -182,6 +219,7 @@ function TeamsPage() {
                   </div>
                 ))}
               </div>
+
               <DialogFooter className="gap-2">
                 <button className="btn-secondary text-sm" onClick={() => onRebalance(liveDetail)}>
                   <Shuffle className="size-4" /> Rebalance
@@ -273,3 +311,33 @@ function roleTone(r: string): any {
     : r === "Business Analyst" ? "success"
     : r === "Team Leader" ? "navy" : "default";
 }
+
+function WeightedFactor({ weight, label, value, explanation }: { weight: number; label: string; value: number; explanation: string }) {
+  return (
+    <div className="border border-border rounded-lg p-3 bg-background/60">
+      <div className="flex items-center justify-between text-xs">
+        <span className="font-semibold">{label}</span>
+        <span className="text-muted-foreground tabular-nums">weight {weight}% · score {value}</span>
+      </div>
+      <div className="mt-1.5 h-2 rounded-full bg-muted overflow-hidden">
+        <div className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full" style={{ width: `${value}%` }} />
+      </div>
+      <p className="text-[11px] text-muted-foreground mt-1.5 italic">{explanation}</p>
+    </div>
+  );
+}
+
+function SummaryBlock({ tone, title, children }: { tone: "success" | "warning" | "info"; title: string; children: React.ReactNode }) {
+  const cls = tone === "success" ? "border-success/30 bg-success/5"
+    : tone === "warning" ? "border-warning/30 bg-warning/5"
+    : "border-info/30 bg-info/5";
+  return (
+    <div className={`rounded-lg p-3 border ${cls}`}>
+      <div className="text-xs font-semibold uppercase tracking-wider mb-1.5">{title}</div>
+      <ul className="text-xs space-y-1 list-disc pl-4 marker:text-muted-foreground">
+        {children}
+      </ul>
+    </div>
+  );
+}
+
