@@ -1,5 +1,5 @@
 import { Link, Outlet } from "@tanstack/react-router";
-import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User } from "lucide-react";
+import { LayoutDashboard, Users, Users2, AlertTriangle, BarChart3, Sparkles, LogOut, User, Shuffle } from "lucide-react";
 import type { ReactNode } from "react";
 
 const FACULTY_NAV = [
@@ -7,6 +7,7 @@ const FACULTY_NAV = [
   { to: "/students", label: "Students", icon: Users },
   { to: "/teams", label: "Teams", icon: Users2 },
   { to: "/conflicts", label: "Conflicts", icon: AlertTriangle },
+  { to: "/rebalancing", label: "Rebalancing", icon: Shuffle },
   { to: "/analytics", label: "Analytics", icon: BarChart3 },
 ] as const;
 
