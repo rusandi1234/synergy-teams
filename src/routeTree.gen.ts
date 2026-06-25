@@ -22,6 +22,7 @@ import { Route as AuthenticatedRebalancingRouteImport } from './routes/_authenti
 import { Route as AuthenticatedEvidenceRouteImport } from './routes/_authenticated/evidence'
 import { Route as AuthenticatedConflictsRouteImport } from './routes/_authenticated/conflicts'
 import { Route as AuthenticatedCompleteProfileRouteImport } from './routes/_authenticated/complete-profile'
+import { Route as AuthenticatedApprovalsRouteImport } from './routes/_authenticated/approvals'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
 
 const StudentRegisterRoute = StudentRegisterRouteImport.update({
@@ -90,6 +91,11 @@ const AuthenticatedCompleteProfileRoute =
     path: '/complete-profile',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedApprovalsRoute = AuthenticatedApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedAnalyticsRoute = AuthenticatedAnalyticsRouteImport.update({
   id: '/analytics',
   path: '/analytics',
@@ -103,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/student-login': typeof StudentLoginRoute
   '/student-register': typeof StudentRegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
   '/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/conflicts': typeof AuthenticatedConflictsRoute
   '/evidence': typeof AuthenticatedEvidenceRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/student-login': typeof StudentLoginRoute
   '/student-register': typeof StudentRegisterRoute
   '/analytics': typeof AuthenticatedAnalyticsRoute
+  '/approvals': typeof AuthenticatedApprovalsRoute
   '/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/conflicts': typeof AuthenticatedConflictsRoute
   '/evidence': typeof AuthenticatedEvidenceRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/student-login': typeof StudentLoginRoute
   '/student-register': typeof StudentRegisterRoute
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
+  '/_authenticated/approvals': typeof AuthenticatedApprovalsRoute
   '/_authenticated/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/_authenticated/conflicts': typeof AuthenticatedConflictsRoute
   '/_authenticated/evidence': typeof AuthenticatedEvidenceRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/student-login'
     | '/student-register'
     | '/analytics'
+    | '/approvals'
     | '/complete-profile'
     | '/conflicts'
     | '/evidence'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/student-login'
     | '/student-register'
     | '/analytics'
+    | '/approvals'
     | '/complete-profile'
     | '/conflicts'
     | '/evidence'
@@ -182,6 +193,7 @@ export interface FileRouteTypes {
     | '/student-login'
     | '/student-register'
     | '/_authenticated/analytics'
+    | '/_authenticated/approvals'
     | '/_authenticated/complete-profile'
     | '/_authenticated/conflicts'
     | '/_authenticated/evidence'
@@ -293,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCompleteProfileRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/approvals': {
+      id: '/_authenticated/approvals'
+      path: '/approvals'
+      fullPath: '/approvals'
+      preLoaderRoute: typeof AuthenticatedApprovalsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/analytics': {
       id: '/_authenticated/analytics'
       path: '/analytics'
@@ -305,6 +324,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
+  AuthenticatedApprovalsRoute: typeof AuthenticatedApprovalsRoute
   AuthenticatedCompleteProfileRoute: typeof AuthenticatedCompleteProfileRoute
   AuthenticatedConflictsRoute: typeof AuthenticatedConflictsRoute
   AuthenticatedEvidenceRoute: typeof AuthenticatedEvidenceRoute
@@ -317,6 +337,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
+  AuthenticatedApprovalsRoute: AuthenticatedApprovalsRoute,
   AuthenticatedCompleteProfileRoute: AuthenticatedCompleteProfileRoute,
   AuthenticatedConflictsRoute: AuthenticatedConflictsRoute,
   AuthenticatedEvidenceRoute: AuthenticatedEvidenceRoute,
