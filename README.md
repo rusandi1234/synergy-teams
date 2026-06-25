@@ -382,7 +382,7 @@ package.json
 
 # GitHub Repository
 
-()
+(https://rusandi1234.github.io/synergy-teams/)
 
 ---
 
