@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Route as AuthRoute } from "./route";
 import { PageHeader, Badge } from "@/components/AppLayout";
-import { MetricCard, CompatibilityRing, SectionHeader } from "@/components/SynergyUI";
+import { MetricCard, CompatibilityRing, SectionHeader, ScoreBar } from "@/components/SynergyUI";
 import { useStudents } from "@/lib/useStudents";
 import { useSynergyForStudents } from "@/lib/synergy";
 import {
