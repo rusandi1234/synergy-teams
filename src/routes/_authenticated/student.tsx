@@ -352,24 +352,72 @@ function StudentDashboard() {
         </div>
       </div>
 
+      {/* PROFILE STRENGTH + EXTENDED SECTIONS */}
+      <div className="mt-6 grid lg:grid-cols-[280px_1fr] gap-6">
+        <div className="surface-elevated p-6 flex flex-col items-center justify-center text-center">
+          <SectionHeader icon={Gauge} title="Profile Strength" subtitle="Complete your profile to boost match quality" />
+          <CompatibilityRing value={completion} size={150} label="Complete" />
+          <div className="mt-3 text-xs text-muted-foreground">
+            {completion === 100 ? "Profile complete!" : `${100 - completion}% to a complete profile`}
+          </div>
+        </div>
+        <div className="surface-elevated p-6 space-y-5">
+          <SectionHeader icon={Sparkles} title="Extended Profile" subtitle="These fields strengthen your recommendation accuracy" action={<button onClick={() => setEditOpen(true)} className="btn-secondary text-xs"><Pencil className="size-3.5" /> Edit</button>} />
+          <div className="grid sm:grid-cols-2 gap-4 text-sm">
+            <Detail label="Soft Skills" value={extra.softSkills || "—"} />
+            <Detail label="Availability Calendar" value={extra.availabilityCalendar || "—"} />
+            <Detail label="Workload Preference" value={extra.workloadPref || "—"} />
+            <Detail label="Previous Projects" value={extra.previousProjects || "—"} />
+            <Detail label="Certificates" value={extra.certificates || "—"} />
+            <Detail label="GitHub Profile" value={extra.github || "—"} />
+            <Detail label="Portfolio Link" value={extra.portfolio || "—"} />
+          </div>
+        </div>
+      </div>
+
       {/* Edit Profile Dialog */}
       <Dialog open={editOpen} onOpenChange={setEditOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Profile</DialogTitle>
             <DialogDescription>Update your details. Changes are visible to faculty immediately.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-3">
-            <FieldEdit label="Full Name" value={fName} onChange={setFName} />
-            <FieldEdit label="Skills (comma separated)" value={fSkills} onChange={setFSkills} />
-            <div className="grid grid-cols-2 gap-3">
-              <SelectEdit label="Availability" value={fAvail} onChange={setFAvail} options={AVAIL} />
-              <SelectEdit label="Preferred Role" value={fRole} onChange={setFRole} options={ROLES} />
-            </div>
-            <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Workload Capacity (0–10): {fWorkload}</span>
-              <input type="range" min={0} max={10} value={fWorkload} onChange={e => setFWorkload(Number(e.target.value))} className="mt-2 w-full accent-primary" />
-            </label>
+          <div className="space-y-5">
+            <Section title="Personal Information">
+              <FieldEdit label="Full Name" value={fName} onChange={setFName} />
+            </Section>
+            <Section title="Programming Skills">
+              <FieldEdit label="Skills (comma separated)" value={fSkills} onChange={setFSkills} />
+            </Section>
+            <Section title="Soft Skills">
+              <FieldEdit label="Soft skills (comma separated)" value={extra.softSkills} onChange={v => setExtraField("softSkills", v)} />
+            </Section>
+            <Section title="Availability">
+              <div className="grid grid-cols-2 gap-3">
+                <SelectEdit label="Availability Window" value={fAvail} onChange={setFAvail} options={AVAIL} />
+                <FieldEdit label="Availability Calendar (e.g. Mon 10–12, Wed 2–4)" value={extra.availabilityCalendar} onChange={v => setExtraField("availabilityCalendar", v)} />
+              </div>
+            </Section>
+            <Section title="Preferred Roles & Workload">
+              <div className="grid grid-cols-2 gap-3">
+                <SelectEdit label="Preferred Role" value={fRole} onChange={setFRole} options={ROLES} />
+                <FieldEdit label="Workload Preference (notes)" value={extra.workloadPref} onChange={v => setExtraField("workloadPref", v)} />
+              </div>
+              <label className="block mt-3">
+                <span className="text-xs font-medium text-muted-foreground">Workload Capacity (0–10): {fWorkload}</span>
+                <input type="range" min={0} max={10} value={fWorkload} onChange={e => setFWorkload(Number(e.target.value))} className="mt-2 w-full accent-primary" />
+              </label>
+            </Section>
+            <Section title="Projects & Certificates">
+              <FieldEdit label="Previous Projects" value={extra.previousProjects} onChange={v => setExtraField("previousProjects", v)} />
+              <FieldEdit label="Certificates" value={extra.certificates} onChange={v => setExtraField("certificates", v)} />
+            </Section>
+            <Section title="Links">
+              <div className="grid grid-cols-2 gap-3">
+                <FieldEdit label="GitHub Profile" value={extra.github} onChange={v => setExtraField("github", v)} />
+                <FieldEdit label="Portfolio Link" value={extra.portfolio} onChange={v => setExtraField("portfolio", v)} />
+              </div>
+            </Section>
           </div>
           <DialogFooter className="gap-2">
             <button className="btn-ghost text-sm" onClick={() => setEditOpen(false)}>Cancel</button>
@@ -379,6 +427,7 @@ function StudentDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
 
       {/* Team Detail Dialog */}
       <Dialog open={teamOpen} onOpenChange={setTeamOpen}>
