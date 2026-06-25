@@ -18,6 +18,7 @@ import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedTeamsRouteImport } from './routes/_authenticated/teams'
 import { Route as AuthenticatedStudentsRouteImport } from './routes/_authenticated/students'
 import { Route as AuthenticatedStudentRouteImport } from './routes/_authenticated/student'
+import { Route as AuthenticatedRebalancingRouteImport } from './routes/_authenticated/rebalancing'
 import { Route as AuthenticatedConflictsRouteImport } from './routes/_authenticated/conflicts'
 import { Route as AuthenticatedCompleteProfileRouteImport } from './routes/_authenticated/complete-profile'
 import { Route as AuthenticatedAnalyticsRouteImport } from './routes/_authenticated/analytics'
@@ -66,6 +67,12 @@ const AuthenticatedStudentRoute = AuthenticatedStudentRouteImport.update({
   path: '/student',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRebalancingRoute =
+  AuthenticatedRebalancingRouteImport.update({
+    id: '/rebalancing',
+    path: '/rebalancing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedConflictsRoute = AuthenticatedConflictsRouteImport.update({
   id: '/conflicts',
   path: '/conflicts',
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/conflicts': typeof AuthenticatedConflictsRoute
+  '/rebalancing': typeof AuthenticatedRebalancingRoute
   '/student': typeof AuthenticatedStudentRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/teams': typeof AuthenticatedTeamsRoute
@@ -104,6 +112,7 @@ export interface FileRoutesByTo {
   '/analytics': typeof AuthenticatedAnalyticsRoute
   '/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/conflicts': typeof AuthenticatedConflictsRoute
+  '/rebalancing': typeof AuthenticatedRebalancingRoute
   '/student': typeof AuthenticatedStudentRoute
   '/students': typeof AuthenticatedStudentsRoute
   '/teams': typeof AuthenticatedTeamsRoute
@@ -119,6 +128,7 @@ export interface FileRoutesById {
   '/_authenticated/analytics': typeof AuthenticatedAnalyticsRoute
   '/_authenticated/complete-profile': typeof AuthenticatedCompleteProfileRoute
   '/_authenticated/conflicts': typeof AuthenticatedConflictsRoute
+  '/_authenticated/rebalancing': typeof AuthenticatedRebalancingRoute
   '/_authenticated/student': typeof AuthenticatedStudentRoute
   '/_authenticated/students': typeof AuthenticatedStudentsRoute
   '/_authenticated/teams': typeof AuthenticatedTeamsRoute
@@ -135,6 +145,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/complete-profile'
     | '/conflicts'
+    | '/rebalancing'
     | '/student'
     | '/students'
     | '/teams'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
     | '/analytics'
     | '/complete-profile'
     | '/conflicts'
+    | '/rebalancing'
     | '/student'
     | '/students'
     | '/teams'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
     | '/_authenticated/analytics'
     | '/_authenticated/complete-profile'
     | '/_authenticated/conflicts'
+    | '/_authenticated/rebalancing'
     | '/_authenticated/student'
     | '/_authenticated/students'
     | '/_authenticated/teams'
@@ -240,6 +253,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStudentRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rebalancing': {
+      id: '/_authenticated/rebalancing'
+      path: '/rebalancing'
+      fullPath: '/rebalancing'
+      preLoaderRoute: typeof AuthenticatedRebalancingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/conflicts': {
       id: '/_authenticated/conflicts'
       path: '/conflicts'
@@ -268,6 +288,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAnalyticsRoute: typeof AuthenticatedAnalyticsRoute
   AuthenticatedCompleteProfileRoute: typeof AuthenticatedCompleteProfileRoute
   AuthenticatedConflictsRoute: typeof AuthenticatedConflictsRoute
+  AuthenticatedRebalancingRoute: typeof AuthenticatedRebalancingRoute
   AuthenticatedStudentRoute: typeof AuthenticatedStudentRoute
   AuthenticatedStudentsRoute: typeof AuthenticatedStudentsRoute
   AuthenticatedTeamsRoute: typeof AuthenticatedTeamsRoute
@@ -278,6 +299,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAnalyticsRoute: AuthenticatedAnalyticsRoute,
   AuthenticatedCompleteProfileRoute: AuthenticatedCompleteProfileRoute,
   AuthenticatedConflictsRoute: AuthenticatedConflictsRoute,
+  AuthenticatedRebalancingRoute: AuthenticatedRebalancingRoute,
   AuthenticatedStudentRoute: AuthenticatedStudentRoute,
   AuthenticatedStudentsRoute: AuthenticatedStudentsRoute,
   AuthenticatedTeamsRoute: AuthenticatedTeamsRoute,
